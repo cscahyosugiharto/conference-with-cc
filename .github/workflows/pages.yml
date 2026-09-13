@@ -15,17 +15,35 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.detect.outputs.ready }}
+    steps:
+      - name: Detect Pages
+        id: detect
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh api "repos/${GITHUB_REPOSITORY}/pages" >/dev/null 2>&1; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Pages is not enabled yet. Enable it at Settings → Pages (GitHub Actions, or branch main /)."
+          fi
+
   deploy:
+    needs: detect
+    if: needs.detect.outputs.ready == 'true'
+    runs-on: ubuntu-latest
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
-    runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Prepare site
         run: |
-          mkdir -p _site
           mkdir -p _site/vendor
           cp index.html styles.css app.js favicon.svg 404.html .nojekyll README.md _site/
           cp vendor/*.js _site/vendor/

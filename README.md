@@ -4,7 +4,7 @@ Polished single-page seating chart and ticket generator for **Conference with CC
 
 **Live site:** [https://cscahyosugiharto.github.io/conference-with-cc/](https://cscahyosugiharto.github.io/conference-with-cc/)
 
-GitHub Pages is configured from `main` (root) via `.github/workflows/pages.yml`. If the URL 404s, enable Pages once in the repo: **Settings → Pages → Source: GitHub Actions**.
+Enable Pages once (repo admin): [Settings → Pages](https://github.com/cscahyosugiharto/conference-with-cc/settings/pages) → **Source: GitHub Actions**, or **Deploy from a branch** `main` / `(root)`. The site files are already on `main`.
 
 ## What it does
 
