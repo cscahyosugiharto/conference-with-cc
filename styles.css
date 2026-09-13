@@ -142,7 +142,7 @@ body::before {
   background: rgba(198, 162, 78, 0.2);
   color: var(--navy);
   font-size: 0.75rem;
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .step-pill[aria-current="step"] .step-num {
@@ -260,7 +260,7 @@ body::before {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  font-weight: 650;
+  font-weight: 600;
   font-size: 0.85rem;
   background: var(--white);
   color: var(--navy);
@@ -357,7 +357,7 @@ body::before {
   display: block;
   letter-spacing: 0.18em;
   font-size: 0.68rem;
-  font-weight: 650;
+  font-weight: 600;
   color: var(--navy);
 }
 
@@ -395,7 +395,7 @@ body::before {
   font-size: 0.78rem;
   letter-spacing: 0.18em;
   color: var(--muted);
-  font-weight: 650;
+  font-weight: 600;
 }
 
 .legend-item {
@@ -453,7 +453,7 @@ body::before {
   padding: 13px 16px;
   font-family: inherit;
   font-size: 0.95rem;
-  font-weight: 650;
+  font-weight: 600;
   cursor: pointer;
   transition: transform 0.15s ease, opacity 0.15s ease, background 0.15s ease;
 }
@@ -497,7 +497,7 @@ body::before {
 label {
   display: block;
   font-size: 0.86rem;
-  font-weight: 650;
+  font-weight: 600;
   margin-bottom: 8px;
 }
 

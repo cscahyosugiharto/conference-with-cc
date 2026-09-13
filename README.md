@@ -4,6 +4,8 @@ Polished single-page seating chart and ticket generator for **Conference with CC
 
 **Live site:** [https://cscahyosugiharto.github.io/conference-with-cc/](https://cscahyosugiharto.github.io/conference-with-cc/)
 
+GitHub Pages is configured from `main` (root) via `.github/workflows/pages.yml`. If the URL 404s, enable Pages once in the repo: **Settings → Pages → Source: GitHub Actions**.
+
 ## What it does
 
 1. Interactive hall map with **exactly 200 seats** in blocks **A–L** (gold premium / navy standard).

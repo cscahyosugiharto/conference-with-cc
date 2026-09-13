@@ -190,11 +190,36 @@
     return `https://wa.me/?text=${encodeURIComponent(ticketText())}`;
   }
 
-  async function makeQrDataUrl(text) {
-    return QRCode.toDataURL(text, {
-      width: 220,
-      margin: 1,
-      color: { dark: "#0c1b33", light: "#ffffff" },
+  function makeQrDataUrl(text) {
+    return new Promise((resolve, reject) => {
+      const holder = document.createElement("div");
+      holder.style.cssText = "position:absolute;left:-9999px;top:0;";
+      document.body.appendChild(holder);
+      try {
+        const qr = new QRCode(holder, {
+          text,
+          width: 220,
+          height: 220,
+          colorDark: "#0c1b33",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.M,
+        });
+        const grab = () => {
+          const img = holder.querySelector("img");
+          const canvas = holder.querySelector("canvas");
+          let url = "";
+          if (canvas) url = canvas.toDataURL("image/png");
+          else if (img && img.src) url = img.src;
+          holder.remove();
+          if (!url) reject(new Error("QR tidak terbuat"));
+          else resolve(url);
+        };
+        requestAnimationFrame(() => setTimeout(grab, 40));
+        void qr;
+      } catch (err) {
+        holder.remove();
+        reject(err);
+      }
     });
   }
 
@@ -278,12 +303,17 @@
     els.tCat.textContent = categoryLabel(state.ticket.seat.category);
     els.tId.textContent = state.ticket.id;
 
-    const qr = await makeQrDataUrl(`${state.ticket.id}|${state.ticket.seat.code}|${name}`);
     els.qrPreview.innerHTML = "";
-    const img = document.createElement("img");
-    img.alt = "";
-    img.src = qr;
-    els.qrPreview.appendChild(img);
+    try {
+      const qr = await makeQrDataUrl(`${state.ticket.id}|${state.ticket.seat.code}|${name}`);
+      const img = document.createElement("img");
+      img.alt = "Kode tiket";
+      img.src = qr;
+      els.qrPreview.appendChild(img);
+    } catch (err) {
+      console.warn(err);
+      els.qrPreview.textContent = state.ticket.id;
+    }
 
     await buildPdf();
     showStep(3);
@@ -358,6 +388,10 @@
     els.doctorName.value = "";
     showStep(1);
   });
+
+  if (!navigator.share) {
+    els.shareBtn.classList.add("hidden");
+  }
 
   renderLegend();
   renderSeats();
