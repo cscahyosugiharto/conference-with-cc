@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Conference with CC — Pilih Kursi & Tiket</title>
+  <meta name="description" content="Pilih kursi dan unduh tiket Conference with CC 2026. CONNECT • LEARN • GROW TOGETHER.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@400;500;600;650;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <a class="skip-link" href="#main">Lewati ke konten</a>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <p class="eyebrow">CONNECT • LEARN • GROW TOGETHER</p>
+        <h1>Conference <span>with CC</span></h1>
+      </div>
+      <p class="quote">“Same Vision<br>Higher Impact”</p>
+    </header>
+
+    <nav class="steps" aria-label="Langkah pemesanan">
+      <div class="step-pill" data-step-pill="1" aria-current="step"><span class="step-num">1</span> Pilih Kursi</div>
+      <div class="step-pill" data-step-pill="2"><span class="step-num">2</span> Nama Dokter</div>
+      <div class="step-pill" data-step-pill="3"><span class="step-num">3</span> Tiket</div>
+    </nav>
+
+    <main id="main">
+      <section id="step-seat" class="panel" aria-labelledby="seat-heading">
+        <div class="layout">
+          <div>
+            <div class="hall-wrap">
+              <div class="stage" aria-hidden="true">
+                <div class="plants">
+                  <span class="plant p1"></span>
+                  <span class="plant p2"></span>
+                </div>
+                <div class="stage-copy">
+                  <div class="stage-kicker">PEOPLE • IDEAS • KNOWLEDGE</div>
+                  <h2 class="stage-title">A BRIGHTER TOMORROW TOGETHER</h2>
+                </div>
+              </div>
+              <div class="podium" aria-hidden="true"></div>
+              <div id="blocks" class="blocks" role="group" aria-label="Denah kursi Conference with CC"></div>
+              <div class="meta-row">
+                <div class="total-seats">
+                  200
+                  <small>TOTAL SEATS</small>
+                </div>
+                <div class="entrance">
+                  <div class="door">
+                    <div class="arrow"></div>
+                    <span>ENTRANCE</span>
+                  </div>
+                </div>
+                <div class="total-seats" style="text-align:right">
+                  200
+                  <small>KURSI TERSEDIA</small>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <aside class="side">
+            <div class="card">
+              <h2>SEAT CATEGORIES</h2>
+              <div id="legend"></div>
+              <div class="legend-item">
+                <span class="swatch pick"></span>
+                <span>Kursi dipilih</span>
+                <span class="legend-meta">emerald</span>
+              </div>
+            </div>
+            <div class="card selected-box">
+              <h2>KURSI TERPILIH</h2>
+              <p class="seat-code" id="selected-code">—</p>
+              <p id="selected-meta">Klik satu kursi di denah.</p>
+            </div>
+            <div class="actions">
+              <button class="btn btn-primary" id="next-btn" type="button" disabled>Lanjut</button>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section id="step-form" class="panel form-panel hidden" aria-labelledby="form-heading">
+        <h2 id="form-heading" class="stage-title" style="color:var(--navy);margin-top:0">Data pemegang tiket</h2>
+        <p class="hint">Masukkan nama dokter yang akan tercetak di tiket.</p>
+        <form id="doctor-form" novalidate>
+          <label for="doctor-name">Nama Dokter</label>
+          <input id="doctor-name" name="namaDokter" type="text" required minlength="2" maxlength="80" autocomplete="name" placeholder="contoh: dr. Andini Putri, Sp.PD">
+          <p class="error" id="form-error" role="alert"></p>
+          <div class="actions" style="margin-top:18px">
+            <button class="btn btn-gold" type="submit">Buat Tiket</button>
+            <button class="btn btn-ghost" id="back-to-seats" type="button">Kembali</button>
+          </div>
+        </form>
+      </section>
+
+      <section id="step-ticket" class="panel ticket-panel hidden" aria-labelledby="ticket-heading">
+        <h2 id="ticket-heading" class="stage-title" style="color:var(--navy);margin-top:0">Tiket Anda</h2>
+        <div class="ticket-card" id="ticket-card">
+          <div class="ticket-left">
+            <div>
+              <div class="stage-kicker">CONFERENCE WITH CC 2026</div>
+              <h3>A Brighter Tomorrow Together</h3>
+            </div>
+            <div class="qr-box" id="qr-preview" aria-hidden="true"></div>
+          </div>
+          <div class="ticket-right">
+            <dl>
+              <dt>Nama Dokter</dt>
+              <dd id="t-name"></dd>
+              <dt>Kode Kursi</dt>
+              <dd id="t-seat"></dd>
+              <dt>Kategori</dt>
+              <dd id="t-cat"></dd>
+              <dt>Tanggal</dt>
+              <dd>Conference with CC 2026</dd>
+              <dt>Ticket ID</dt>
+              <dd id="t-id"></dd>
+            </dl>
+          </div>
+        </div>
+        <div class="actions" style="margin-top:18px">
+          <button class="btn btn-gold" id="download-btn" type="button">Unduh Tiket</button>
+          <button class="btn btn-whatsapp" id="wa-btn" type="button">Bagikan ke WhatsApp</button>
+          <button class="btn btn-ghost" id="share-btn" type="button">Bagikan</button>
+          <button class="btn btn-ghost" id="new-booking" type="button">Pilih kursi lain</button>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer">
+      People together for a brighter tomorrow · More people, greater possibilities
+    </footer>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
