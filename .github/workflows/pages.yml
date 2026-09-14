@@ -44,8 +44,9 @@ jobs:
         uses: actions/checkout@v4
       - name: Prepare site
         run: |
-          mkdir -p _site/vendor
+          mkdir -p _site/vendor _site/assets
           cp index.html admin.html styles.css app.js admin.js store.js config.js ticket.js hall.js favicon.svg 404.html .nojekyll README.md _site/
+          cp assets/* _site/assets/
           cp vendor/*.js _site/vendor/
       - name: Configure Pages
         uses: actions/configure-pages@v5

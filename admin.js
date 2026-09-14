@@ -41,7 +41,7 @@
     if (!iso) return "—";
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) return iso;
-    return new Intl.DateTimeFormat("id-ID", {
+    return new Intl.DateTimeFormat("en-GB", {
       dateStyle: "medium",
       timeStyle: "short",
     }).format(date);
@@ -75,27 +75,27 @@
     const id = escapeHtml(row.ticketId || row.seat);
     return `
       <div class="admin-row-actions">
-        <button class="btn btn-gold btn-compact" type="button" data-act="pdf" data-id="${id}">Bagikan PDF</button>
-        <button class="btn btn-danger btn-compact" type="button" data-act="del" data-id="${id}">Hapus</button>
+        <button class="btn btn-gold btn-compact" type="button" data-act="pdf" data-id="${id}">Share PDF</button>
+        <button class="btn btn-danger btn-compact" type="button" data-act="del" data-id="${id}">Delete</button>
       </div>
     `;
   }
 
   function renderTable() {
     const rows = filteredRows();
-    els.count.textContent = `${cache.length} pendaftar${els.filter.value.trim() ? ` · ${rows.length} ditampilkan` : ""}`;
+    els.count.textContent = `${cache.length} registration${cache.length === 1 ? "" : "s"}${els.filter.value.trim() ? ` · ${rows.length} shown` : ""}`;
     if (!rows.length) {
-      els.rows.innerHTML = `<tr><td colspan="6">${cache.length ? "Tidak ada hasil." : "Belum ada pendaftar."}</td></tr>`;
+      els.rows.innerHTML = `<tr><td colspan="6">${cache.length ? "No matching results." : "No registrations yet."}</td></tr>`;
       return;
     }
     els.rows.innerHTML = rows.map((row) => `
       <tr>
-        <td data-label="Nama Dokter">${escapeHtml(row.name)}</td>
-        <td data-label="Kursi"><strong>${escapeHtml(row.seat)}</strong></td>
-        <td data-label="Kategori">${escapeHtml(row.category || "—")}</td>
-        <td data-label="Waktu">${escapeHtml(formatWhen(row.createdAt))}</td>
+        <td data-label="Full Name">${escapeHtml(row.name)}</td>
+        <td data-label="Seat"><strong>${escapeHtml(row.seat)}</strong></td>
+        <td data-label="Category">${escapeHtml(row.category || "—")}</td>
+        <td data-label="Time">${escapeHtml(formatWhen(row.createdAt))}</td>
         <td class="mono" data-label="Ticket ID">${escapeHtml(row.ticketId || "—")}</td>
-        <td data-label="Aksi">${actionButtons(row)}</td>
+        <td data-label="Actions">${actionButtons(row)}</td>
       </tr>
     `).join("");
   }
@@ -110,7 +110,7 @@
       btn.setAttribute("aria-pressed", inspect === btn.dataset.code ? "true" : "false");
       btn.title = occupant
         ? `${btn.dataset.code} · ${occupant.name}`
-        : `${btn.dataset.code} · belum terisi`;
+        : `${btn.dataset.code} · not yet booked`;
     });
   }
 
@@ -131,7 +131,7 @@
       els.seatPdf.dataset.id = occupant.ticketId || occupant.seat;
       els.seatDelete.dataset.id = occupant.ticketId || occupant.seat;
     } else {
-      els.seatMeta.textContent = "belum terisi";
+      els.seatMeta.textContent = "not yet booked";
       els.seatActions.classList.add("hidden");
     }
   }
@@ -149,7 +149,7 @@
   }
 
   function exportCsv() {
-    const header = ["Nama Dokter", "Kursi", "Kategori", "Waktu", "Ticket ID"];
+    const header = ["Full Name", "Seat", "Category", "Time", "Ticket ID"];
     const lines = [header.join(",")].concat(cache.map((row) => [
       csv(row.name),
       csv(row.seat),
@@ -161,7 +161,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = "conference-cc-pendaftar.csv";
+    a.download = "icos-2027-registrations.csv";
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -181,7 +181,7 @@
   }
 
   async function deleteRow(row) {
-    const ok = window.confirm(`Hapus pendaftaran ${row.seat} (${row.name})? Kursi akan tersedia lagi.`);
+    const ok = window.confirm(`Delete the booking for seat ${row.seat} (${row.name})? The seat will become available again.`);
     if (!ok) return;
     await window.CCStore.deleteRegistration({ ticketId: row.ticketId, seat: row.seat });
     if (inspect === row.seat) {
@@ -211,7 +211,7 @@
   els.form.addEventListener("submit", (event) => {
     event.preventDefault();
     if (els.pass.value !== PASS) {
-      els.error.textContent = "Kata sandi salah.";
+      els.error.textContent = "Incorrect password.";
       return;
     }
     sessionStorage.setItem(AUTH_KEY, "1");

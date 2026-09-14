@@ -18,7 +18,6 @@
     tSeat: document.getElementById("t-seat"),
     tCat: document.getElementById("t-cat"),
     tId: document.getElementById("t-id"),
-    qrPreview: document.getElementById("qr-preview"),
     downloadBtn: document.getElementById("download-btn"),
     shareBtn: document.getElementById("share-btn"),
     newBooking: document.getElementById("new-booking"),
@@ -58,7 +57,7 @@
       btn.disabled = taken;
       if (taken) {
         btn.setAttribute("aria-disabled", "true");
-        btn.title = `${btn.dataset.code} · sudah terisi`;
+        btn.title = `${btn.dataset.code} · taken`;
         if (btn.getAttribute("aria-pressed") === "true") {
           btn.setAttribute("aria-pressed", "false");
           state.selected = null;
@@ -108,7 +107,7 @@
   function updateSelection() {
     if (!state.selected) {
       els.selectedCode.textContent = "—";
-      els.selectedMeta.textContent = "Klik satu kursi di denah.";
+      els.selectedMeta.textContent = "Click a seat on the chart.";
       els.nextBtn.disabled = true;
       return;
     }
@@ -154,18 +153,6 @@
     els.tSeat.textContent = state.ticket.seat.code;
     els.tCat.textContent = categoryLabel(state.ticket.seat.category);
     els.tId.textContent = state.ticket.id;
-
-    els.qrPreview.innerHTML = "";
-    try {
-      const qr = await window.CCTicket.makeQrDataUrl(`${state.ticket.id}|${state.ticket.seat.code}|${name}`);
-      const img = document.createElement("img");
-      img.alt = "Kode tiket";
-      img.src = qr;
-      els.qrPreview.appendChild(img);
-    } catch (err) {
-      console.warn(err);
-      els.qrPreview.textContent = state.ticket.id;
-    }
 
     await buildPdf();
     try {
@@ -219,7 +206,7 @@
     event.preventDefault();
     const name = els.doctorName.value.trim();
     if (name.length < 2) {
-      els.formError.textContent = "Nama Dokter wajib diisi.";
+      els.formError.textContent = "Full name is required.";
       els.doctorName.focus();
       return;
     }

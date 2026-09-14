@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -17,19 +17,19 @@
         <p class="eyebrow">ADMIN DASHBOARD</p>
         <h1>ICOS <span>2027 Admin</span></h1>
       </div>
-      <button class="btn btn-ghost admin-logout hidden" id="logout-btn" type="button">Keluar</button>
+      <button class="btn btn-ghost admin-logout hidden" id="logout-btn" type="button">Logout</button>
     </header>
 
     <section id="gate" class="admin-gate-wrap">
       <div class="panel admin-gate">
-        <h2 class="stage-title" style="color:var(--navy);margin-top:0">Masuk admin</h2>
-        <p class="hint">Masukkan kata sandi untuk melihat denah dan daftar pendaftar.</p>
+        <h2 class="stage-title" style="color:var(--navy);margin-top:0">Admin login</h2>
+        <p class="hint">Enter the password to view the seating chart and registrations.</p>
         <form id="gate-form">
-          <label for="admin-pass">Kata sandi</label>
+          <label for="admin-pass">Password</label>
           <input id="admin-pass" type="password" autocomplete="current-password" required>
           <p class="error" id="gate-error" role="alert"></p>
           <div class="actions" style="margin-top:16px">
-            <button class="btn btn-gold" type="submit">Masuk</button>
+            <button class="btn btn-gold" type="submit">Log in</button>
           </div>
         </form>
       </div>
@@ -50,7 +50,7 @@
               </div>
             </div>
             <div class="podium" aria-hidden="true"></div>
-            <div id="admin-blocks" class="blocks" role="group" aria-label="Denah kursi admin ICOS 2027"></div>
+            <div id="admin-blocks" class="blocks" role="group" aria-label="ICOS 2027 admin seating chart"></div>
             <div class="hall-footer">
               <div class="total-seats">
                 200
@@ -64,7 +64,7 @@
               </div>
               <div class="total-seats total-seats-end">
                 200
-                <small>KURSI TERSEDIA</small>
+                <small>SEATS AVAILABLE</small>
               </div>
             </div>
           </div>
@@ -75,17 +75,17 @@
             <div class="legend-simple">
               <div class="legend-item"><span class="swatch gold"></span><span>Gold</span></div>
               <div class="legend-item"><span class="swatch navy"></span><span>Blue</span></div>
-              <div class="legend-item"><span class="swatch pick"></span><span>Kursi Dipilih</span></div>
-              <div class="legend-item"><span class="swatch taken"></span><span>Seat Sudah Terisi</span></div>
+              <div class="legend-item"><span class="swatch pick"></span><span>Selected Seat</span></div>
+              <div class="legend-item"><span class="swatch taken"></span><span>Seat Taken</span></div>
             </div>
           </div>
           <div class="card selected-box">
-            <h2>DETAIL KURSI</h2>
+            <h2>SEAT DETAILS</h2>
             <p class="seat-code" id="admin-seat-code">—</p>
-            <p id="admin-seat-meta">Klik satu kursi di denah.</p>
+            <p id="admin-seat-meta">Click a seat on the chart.</p>
             <div class="admin-seat-actions hidden" id="admin-seat-actions">
-              <button class="btn btn-gold btn-compact" id="admin-seat-pdf" type="button">Bagikan PDF</button>
-              <button class="btn btn-danger btn-compact" id="admin-seat-delete" type="button">Hapus</button>
+              <button class="btn btn-gold btn-compact" id="admin-seat-pdf" type="button">Share PDF</button>
+              <button class="btn btn-danger btn-compact" id="admin-seat-delete" type="button">Delete</button>
             </div>
           </div>
         </aside>
@@ -94,29 +94,29 @@
       <div class="panel admin-list-panel">
         <div class="admin-toolbar">
           <div>
-            <h2 class="stage-title" style="color:var(--navy);margin:0">Daftar pendaftar</h2>
-            <p class="admin-count" id="count-line">0 pendaftar</p>
+            <h2 class="stage-title" style="color:var(--navy);margin:0">Registrations</h2>
+            <p class="admin-count" id="count-line">0 registrations</p>
           </div>
           <div class="admin-actions">
-            <input id="filter" type="search" placeholder="Cari nama atau kursi" aria-label="Cari">
-            <button class="btn btn-ghost" id="refresh-btn" type="button">Muat ulang</button>
-            <button class="btn btn-ghost" id="export-btn" type="button">Unduh CSV</button>
+            <input id="filter" type="search" placeholder="Search name or seat" aria-label="Search">
+            <button class="btn btn-ghost" id="refresh-btn" type="button">Refresh</button>
+            <button class="btn btn-ghost" id="export-btn" type="button">Download CSV</button>
           </div>
         </div>
         <div class="table-wrap">
           <table class="admin-table">
             <thead>
               <tr>
-                <th>Nama Dokter</th>
-                <th>Kursi</th>
-                <th>Kategori</th>
-                <th>Waktu</th>
+                <th>Full Name</th>
+                <th>Seat</th>
+                <th>Category</th>
+                <th>Time</th>
                 <th>Ticket ID</th>
-                <th>Aksi</th>
+                <th>Actions</th>
               </tr>
             </thead>
             <tbody id="rows">
-              <tr><td colspan="6">Belum ada data.</td></tr>
+              <tr><td colspan="6">No data yet.</td></tr>
             </tbody>
           </table>
         </div>
@@ -127,7 +127,6 @@
   <script src="store.js"></script>
   <script src="hall.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
-  <script src="vendor/qrcode.min.js"></script>
   <script src="ticket.js"></script>
   <script src="admin.js"></script>
 </body>

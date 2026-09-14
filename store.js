@@ -91,7 +91,7 @@
   }
 
   async function writeRemote(list) {
-    if (!bucket) throw new Error("Store belum dikonfigurasi");
+    if (!bucket) throw new Error("Store is not configured");
     const payload = {
       event: "International Conference of Orthodontic Society 2027",
       updatedAt: new Date().toISOString(),
@@ -166,16 +166,16 @@
     try {
       remote = withoutDeleted(await readRemote());
       if (remote.some((item) => item.seat === row.seat)) {
-        throw new Error("Kursi ini sudah diambil peserta lain.");
+        throw new Error("This seat was just taken by another attendee.");
       }
     } catch (err) {
-      if (String(err.message || err).includes("sudah diambil")) throw err;
+      if (String(err.message || err).includes("just taken")) throw err;
       remoteError = String(err.message || err);
     }
 
     const local = readLocal();
     if (local.some((item) => item.seat === row.seat && item.ticketId !== row.ticketId)) {
-      throw new Error("Kursi ini sudah terdaftar di perangkat ini.");
+      throw new Error("This seat is already registered on this device.");
     }
     writeLocal([row, ...local.filter((item) => item.ticketId !== row.ticketId)]);
 

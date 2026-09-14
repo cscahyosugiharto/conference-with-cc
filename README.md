@@ -9,10 +9,10 @@ Seating chart and ticket generator for **ICOS 2027** / **CC 2027**.
 ## What it does
 
 1. Interactive hall map with **exactly 200 seats** in blocks **A–L** (gold / blue). Occupied seats turn **red**.
-2. Click a seat → **Lanjut** → **Nama Dokter** (empty field, no placeholder) → PDF ticket for **CC 2027**.
-3. Admin denah kursi yang sama, plus daftar pendaftar dengan **Bagikan PDF** dan **Hapus** per baris.
+2. Click a seat → **Next** → **Full Name** (empty field, no placeholder) → luxury PDF ticket for **CC 2027**.
+3. Admin uses the same seating chart, plus a registration list with **Share PDF** and **Delete** on each row.
 
-Static site — no payment. Registrations use a shared KVdb bucket with localStorage fallback.
+Static site — no payment. Registrations use a shared store with localStorage fallback.
 
 ## Local preview
 

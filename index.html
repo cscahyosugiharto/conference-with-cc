@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="id">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>International Conference of Orthodontic Society 2027 — Pilih Kursi</title>
-  <meta name="description" content="Pilih kursi dan unduh tiket International Conference of Orthodontic Society 2027 (ICOS / CC 2027).">
+  <title>International Conference of Orthodontic Society 2027 — Select Seat</title>
+  <meta name="description" content="Select a seat and download your ticket for International Conference of Orthodontic Society 2027 (ICOS / CC 2027).">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-  <a class="skip-link" href="#main">Lewati ke konten</a>
+  <a class="skip-link" href="#main">Skip to content</a>
   <div class="app">
     <header class="topbar">
       <div class="brand">
@@ -22,10 +22,10 @@
       <p class="quote">ICOS 2027<br>CC 2027</p>
     </header>
 
-    <nav class="steps" aria-label="Langkah pemesanan">
-      <div class="step-pill" data-step-pill="1" aria-current="step"><span class="step-num">1</span> Pilih Kursi</div>
-      <div class="step-pill" data-step-pill="2"><span class="step-num">2</span> Nama Dokter</div>
-      <div class="step-pill" data-step-pill="3"><span class="step-num">3</span> Tiket</div>
+    <nav class="steps" aria-label="Booking steps">
+      <div class="step-pill" data-step-pill="1" aria-current="step"><span class="step-num">1</span> Select Seat</div>
+      <div class="step-pill" data-step-pill="2"><span class="step-num">2</span> Full Name</div>
+      <div class="step-pill" data-step-pill="3"><span class="step-num">3</span> Ticket</div>
     </nav>
 
     <main id="main">
@@ -44,7 +44,7 @@
                 </div>
               </div>
               <div class="podium" aria-hidden="true"></div>
-              <div id="blocks" class="blocks" role="group" aria-label="Denah kursi ICOS 2027"></div>
+              <div id="blocks" class="blocks" role="group" aria-label="ICOS 2027 seating chart"></div>
               <div class="hall-footer">
                 <div class="total-seats">
                   200
@@ -58,7 +58,7 @@
                 </div>
                 <div class="total-seats total-seats-end">
                   200
-                  <small>KURSI TERSEDIA</small>
+                  <small>SEATS AVAILABLE</small>
                 </div>
               </div>
             </div>
@@ -78,69 +78,54 @@
                 </div>
                 <div class="legend-item">
                   <span class="swatch pick"></span>
-                  <span>Kursi Dipilih</span>
+                  <span>Selected Seat</span>
                 </div>
                 <div class="legend-item">
                   <span class="swatch taken"></span>
-                  <span>Seat Sudah Terisi</span>
+                  <span>Seat Taken</span>
                 </div>
               </div>
             </div>
             <div class="card selected-box">
-              <h2>KURSI TERPILIH</h2>
+              <h2>SELECTED SEAT</h2>
               <p class="seat-code" id="selected-code">—</p>
-              <p id="selected-meta">Klik satu kursi di denah.</p>
+              <p id="selected-meta">Click a seat on the chart.</p>
             </div>
             <div class="actions">
-              <button class="btn btn-gold" id="next-btn" type="button" disabled>Lanjut</button>
+              <button class="btn btn-gold" id="next-btn" type="button" disabled>Next</button>
             </div>
           </aside>
         </div>
       </section>
 
       <section id="step-form" class="panel form-panel hidden" aria-labelledby="form-heading">
-        <h2 id="form-heading" class="stage-title" style="color:var(--navy);margin-top:0">Data pemegang tiket</h2>
-        <p class="hint">Masukkan nama dokter yang akan tercetak di tiket.</p>
+        <h2 id="form-heading" class="stage-title" style="color:var(--navy);margin-top:0">Ticket holder</h2>
+        <p class="hint">Enter the full name that will be printed on the ticket.</p>
         <form id="doctor-form" novalidate>
-          <label for="doctor-name">Nama Dokter</label>
-          <input id="doctor-name" name="namaDokter" type="text" required minlength="2" maxlength="80" autocomplete="off" spellcheck="false">
+          <label for="doctor-name">Full Name</label>
+          <input id="doctor-name" name="fullName" type="text" required minlength="2" maxlength="80" autocomplete="off" spellcheck="false">
           <p class="error" id="form-error" role="alert"></p>
           <div class="actions" style="margin-top:18px">
-            <button class="btn btn-gold" type="submit">Buat Tiket</button>
-            <button class="btn btn-ghost" id="back-to-seats" type="button">Kembali</button>
+            <button class="btn btn-gold" type="submit">Create Ticket</button>
+            <button class="btn btn-ghost" id="back-to-seats" type="button">Back</button>
           </div>
         </form>
       </section>
 
       <section id="step-ticket" class="panel ticket-panel hidden" aria-labelledby="ticket-heading">
-        <h2 id="ticket-heading" class="stage-title" style="color:var(--navy);margin-top:0">Tiket Anda</h2>
-        <div class="ticket-card" id="ticket-card">
-          <div class="ticket-left">
-            <div>
-              <div class="stage-kicker">ICOS 2027 · CC 2027</div>
-              <h3>International Conference of Orthodontic Society 2027</h3>
-            </div>
-            <div class="qr-box" id="qr-preview" aria-hidden="true"></div>
-          </div>
-          <div class="ticket-right">
-            <dl>
-              <dt>Nama Dokter</dt>
-              <dd id="t-name"></dd>
-              <dt>Kode Kursi</dt>
-              <dd id="t-seat"></dd>
-              <dt>Kategori</dt>
-              <dd id="t-cat"></dd>
-              <dt>Acara</dt>
-              <dd>International Conference of Orthodontic Society 2027</dd>
-              <dt>Ticket ID</dt>
-              <dd id="t-id"></dd>
-            </dl>
-          </div>
+        <h2 id="ticket-heading" class="stage-title" style="color:var(--navy);margin-top:0">Your Ticket</h2>
+        <div class="ticket-blank-wrap" id="ticket-card">
+          <img class="ticket-blank-img" src="assets/ticket-blank.jpg" alt="International Conference of Orthodontic Society 2027 ticket">
+          <p class="ticket-field tf-name" id="t-name"></p>
+          <p class="ticket-field tf-seat" id="t-seat"></p>
+          <p class="ticket-field tf-cat" id="t-cat"></p>
+          <p class="ticket-field tf-event">International Conference of Orthodontic Society 2027</p>
+          <p class="ticket-field tf-id" id="t-id"></p>
         </div>
-        <div class="actions" style="margin-top:18px">
-          <button class="btn btn-gold" id="download-btn" type="button">Unduh Tiket</button>
-          <button class="btn btn-gold" id="share-btn" type="button">Bagikan tiket PDF</button>
-          <button class="btn btn-ghost" id="new-booking" type="button">Pilih kursi lain</button>
+        <div class="actions ticket-actions" style="margin-top:18px">
+          <button class="btn btn-gold" id="download-btn" type="button">Download Ticket</button>
+          <button class="btn btn-gold" id="share-btn" type="button">Share Ticket PDF</button>
+          <button class="btn btn-ghost" id="new-booking" type="button">Choose another seat</button>
         </div>
       </section>
     </main>
@@ -154,7 +139,6 @@
   <script src="store.js"></script>
   <script src="hall.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
-  <script src="vendor/qrcode.min.js"></script>
   <script src="ticket.js"></script>
   <script src="app.js"></script>
 </body>

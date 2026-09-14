@@ -51,7 +51,7 @@
           btn.dataset.code = code;
           btn.dataset.block = id;
           btn.dataset.category = block.category;
-          btn.setAttribute("aria-label", `Kursi ${code}, ${categoryLabel(block.category)}`);
+          btn.setAttribute("aria-label", `Seat ${code}, ${categoryLabel(block.category)}`);
           btn.setAttribute("aria-pressed", "false");
           btn.title = code;
           if (!selectable) btn.tabIndex = 0;

@@ -3,40 +3,54 @@
     name: "International Conference of Orthodontic Society 2027",
     short: "ICOS 2027",
     cc: "CC 2027",
-    tagline: "CONNECT • LEARN • GROW TOGETHER",
+    tagline: "SHAPING TOMORROW IN ORTHODONTICS",
   };
 
-  function makeQrDataUrl(text) {
-    return new Promise((resolve, reject) => {
-      const holder = document.createElement("div");
-      holder.style.cssText = "position:absolute;left:-9999px;top:0;";
-      document.body.appendChild(holder);
-      try {
-        const qr = new QRCode(holder, {
-          text,
-          width: 220,
-          height: 220,
-          colorDark: "#0c1b33",
-          colorLight: "#ffffff",
-          correctLevel: QRCode.CorrectLevel.M,
-        });
-        const grab = () => {
-          const canvas = holder.querySelector("canvas");
-          const img = holder.querySelector("img");
-          let url = "";
-          if (canvas) url = canvas.toDataURL("image/png");
-          else if (img && img.src) url = img.src;
-          holder.remove();
-          if (!url) reject(new Error("QR tidak terbuat"));
-          else resolve(url);
+  const BLANK_SRC = "assets/ticket-blank.jpg";
+  const PAGE = { w: 210, h: 118.19 };
+  const FIELDS = {
+    name: { x: 36.42, y: 47.48, w: 92.69, h: 5.65 },
+    seat: { x: 36.42, y: 55.64, w: 49.23, h: 5.78 },
+    category: { x: 36.42, y: 63.80, w: 68.20, h: 5.78 },
+    event: { x: 36.42, y: 72.09, w: 92.57, h: 5.65 },
+    id: { x: 36.55, y: 80.38, w: 49.11, h: 5.53 },
+  };
+
+  let blankDataUrl = "";
+
+  function loadBlank() {
+    if (blankDataUrl) return Promise.resolve(blankDataUrl);
+    return fetch(BLANK_SRC)
+      .then((res) => {
+        if (!res.ok) throw new Error("Ticket template missing");
+        return res.blob();
+      })
+      .then((blob) => new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          blankDataUrl = reader.result;
+          resolve(blankDataUrl);
         };
-        requestAnimationFrame(() => setTimeout(grab, 40));
-        void qr;
-      } catch (err) {
-        holder.remove();
-        reject(err);
-      }
-    });
+        reader.onerror = reject;
+        reader.readAsDataURL(blob);
+      }));
+  }
+
+  function fillField(doc, box, value, size) {
+    const text = String(value || "").trim() || "—";
+    const pad = 1.8;
+    const maxW = box.w - pad * 2;
+    let fontSize = size;
+    doc.setFont("times", "bold");
+    doc.setTextColor(32, 20, 12);
+    doc.setFontSize(fontSize);
+    while (fontSize > 6.5 && doc.getTextWidth(text) > maxW) {
+      fontSize -= 0.3;
+      doc.setFontSize(fontSize);
+    }
+    const pt = fontSize * 0.352778;
+    const baseline = box.y + (box.h + pt * 0.72) / 2;
+    doc.text(text, box.x + pad, baseline);
   }
 
   function fileName(seat, ticketId) {
@@ -44,63 +58,15 @@
   }
 
   async function buildTicketPdf({ name, seat, category, id }) {
-    const qr = await makeQrDataUrl(`${EVENT.name}|${id}|${seat}|${name}`);
+    const blank = await loadBlank();
     const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [210, 100] });
-
-    doc.setFillColor(244, 239, 228);
-    doc.rect(0, 0, 210, 100, "F");
-    doc.setFillColor(12, 27, 51);
-    doc.rect(0, 0, 68, 100, "F");
-    doc.setFillColor(198, 162, 78);
-    doc.rect(68, 0, 2.2, 100, "F");
-    doc.rect(0, 0, 210, 3, "F");
-    doc.rect(0, 97, 210, 3, "F");
-
-    doc.setTextColor(216, 182, 90);
-    doc.setFont("times", "italic");
-    doc.setFontSize(7.5);
-    doc.text(EVENT.tagline, 8, 14);
-
-    doc.setFont("times", "bold");
-    doc.setFontSize(12);
-    doc.text("International", 8, 26);
-    doc.text("Conference of", 8, 32);
-    doc.text("Orthodontic Society", 8, 38);
-    doc.setFontSize(14);
-    doc.text("CC 2027", 8, 46);
-
-    doc.addImage(qr, "PNG", 12, 54, 36, 36);
-
-    doc.setTextColor(12, 27, 51);
-    doc.setFont("times", "bold");
-    doc.setFontSize(11);
-    doc.text("ADMIT ONE  ·  ICOS 2027", 80, 16);
-
-    const rows = [
-      ["NAMA DOKTER", name],
-      ["KODE KURSI", seat],
-      ["KATEGORI", category || "—"],
-      ["ACARA", EVENT.name],
-      ["TICKET ID", id],
-    ];
-    let y = 28;
-    rows.forEach(([label, value]) => {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7);
-      doc.setTextColor(92, 102, 118);
-      doc.text(label, 80, y);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(11);
-      doc.setTextColor(12, 27, 51);
-      const lines = doc.splitTextToSize(String(value), 118);
-      doc.text(lines, 80, y + 5);
-      y += 13;
-    });
-
-    doc.setDrawColor(198, 162, 78);
-    doc.setLineWidth(0.3);
-    doc.line(80, 20, 198, 20);
+    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [PAGE.w, PAGE.h] });
+    doc.addImage(blank, "JPEG", 0, 0, PAGE.w, PAGE.h);
+    fillField(doc, FIELDS.name, name, 12);
+    fillField(doc, FIELDS.seat, seat, 12);
+    fillField(doc, FIELDS.category, category || "—", 12);
+    fillField(doc, FIELDS.event, EVENT.name, 9.5);
+    fillField(doc, FIELDS.id, id, 10);
     return doc;
   }
 
@@ -108,8 +74,8 @@
     return [
       EVENT.name,
       `${EVENT.short} · ${EVENT.cc}`,
-      `Nama Dokter: ${name}`,
-      `Kursi: ${seat}`,
+      `Full Name: ${name}`,
+      `Seat Code: ${seat}`,
       `Ticket ID: ${id}`,
     ].join("\n");
   }
@@ -136,16 +102,9 @@
     } catch (err) {
       if (err && err.name === "AbortError") return "aborted";
     }
-    try {
-      const wa = `https://wa.me/?text=${encodeURIComponent(text)}`;
-      window.open(wa, "_blank", "noopener");
-    } catch {
-      /* ignore popup blockers */
-    }
     doc.save(filename);
     return "downloaded";
   }
 
-  window.CCTicket = { EVENT, makeQrDataUrl, buildTicketPdf, fileName, shareTicketPdf, shareText };
+  window.CCTicket = { EVENT, BLANK_SRC, buildTicketPdf, fileName, shareTicketPdf, shareText, loadBlank };
 })();
-

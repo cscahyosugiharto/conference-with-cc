@@ -569,7 +569,7 @@ body::before {
 
 .form-panel,
 .ticket-panel {
-  max-width: 720px;
+  max-width: 920px;
   margin: 0 auto;
 }
 
@@ -605,6 +605,50 @@ input[type="search"]:focus {
   color: var(--muted);
   font-size: 0.85rem;
   margin-top: 8px;
+}
+
+.ticket-blank-wrap {
+  position: relative;
+  width: 100%;
+  max-width: 920px;
+  margin: 0 auto;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+}
+
+.ticket-blank-img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.ticket-field {
+  position: absolute;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  color: #24160c;
+  line-height: 1.05;
+  overflow: hidden;
+  white-space: nowrap;
+  letter-spacing: 0.01em;
+  padding: 0 0.8%;
+  box-sizing: border-box;
+}
+
+.tf-name { left: 17.344%; top: 40.170%; width: 44.139%; height: 4.782%; font-size: clamp(0.62rem, 1.7vw, 1.05rem); }
+.tf-seat { left: 17.344%; top: 47.078%; width: 23.445%; height: 4.888%; font-size: clamp(0.62rem, 1.7vw, 1.05rem); }
+.tf-cat { left: 17.344%; top: 53.985%; width: 32.476%; height: 4.888%; font-size: clamp(0.62rem, 1.7vw, 1.05rem); }
+.tf-event { left: 17.344%; top: 60.999%; width: 44.079%; height: 4.782%; font-size: clamp(0.5rem, 1.35vw, 0.82rem); }
+.tf-id { left: 17.404%; top: 68.013%; width: 23.385%; height: 4.676%; font-size: clamp(0.55rem, 1.5vw, 0.92rem); }
+
+.ticket-actions {
+  max-width: 420px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .ticket-card {
@@ -1015,12 +1059,12 @@ body.admin-unlocked .admin-app .topbar {
     padding-top: 4px;
   }
 
-  .admin-table td[data-label="Aksi"] {
+  .admin-table td[data-label="Actions"] {
     grid-template-columns: 1fr;
     padding-top: 10px;
   }
 
-  .admin-table td[data-label="Aksi"]::before {
+  .admin-table td[data-label="Actions"]::before {
     display: none;
   }
 
