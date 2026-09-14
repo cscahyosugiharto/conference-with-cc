@@ -13,6 +13,8 @@
     form: document.getElementById("doctor-form"),
     doctorName: document.getElementById("doctor-name"),
     formError: document.getElementById("form-error"),
+    formStatus: document.getElementById("form-status"),
+    createBtn: document.getElementById("create-ticket-btn"),
     backToSeats: document.getElementById("back-to-seats"),
     tName: document.getElementById("t-name"),
     tSeat: document.getElementById("t-seat"),
@@ -22,6 +24,10 @@
     shareBtn: document.getElementById("share-btn"),
     newBooking: document.getElementById("new-booking"),
     pills: document.querySelectorAll("[data-step-pill]"),
+    hallStatus: document.getElementById("hall-status"),
+    ticketStatus: document.getElementById("ticket-status"),
+    openSeats: document.getElementById("open-seats"),
+    totalSeats: document.getElementById("total-seats"),
   };
 
   const TAKEN_CACHE = "cc2026-taken-cache";
@@ -31,6 +37,7 @@
     ticket: null,
     pdfDoc: null,
     taken: new Set(),
+    saveNote: "",
   };
 
   function persistTakenCache() {
@@ -48,6 +55,14 @@
     } catch {
       /* ignore bad cache */
     }
+  }
+
+  function updateOpenCount() {
+    const seats = [...els.blocks.querySelectorAll(".seat")];
+    const total = seats.length || 200;
+    const takenHere = seats.filter((btn) => state.taken.has(btn.dataset.code)).length;
+    if (els.totalSeats) els.totalSeats.textContent = String(total);
+    if (els.openSeats) els.openSeats.textContent = String(Math.max(0, total - takenHere));
   }
 
   function paintSeats() {
@@ -68,6 +83,7 @@
         btn.title = btn.dataset.code;
       }
     });
+    updateOpenCount();
   }
 
   function addTaken(seats) {
@@ -106,7 +122,7 @@
 
   function updateSelection() {
     if (!state.selected) {
-      els.selectedCode.textContent = "—";
+      els.selectedCode.textContent = "None";
       els.selectedMeta.textContent = "Click a seat on the chart.";
       els.nextBtn.disabled = true;
       return;
@@ -143,48 +159,148 @@
     return state.pdfDoc;
   }
 
+  function setCreating(on) {
+    if (!els.createBtn) return;
+    els.createBtn.disabled = on;
+    els.createBtn.textContent = on ? "Creating ticket..." : "Create ticket";
+    if (els.formStatus) {
+      els.formStatus.textContent = on ? "Building the ticket PDF and saving the seat." : "";
+    }
+  }
+
   async function createTicket(name) {
     state.ticket = {
       name,
       seat: state.selected,
       id: makeTicketId(),
     };
+    state.saveNote = "";
     els.tName.textContent = state.ticket.name;
     els.tSeat.textContent = state.ticket.seat.code;
     els.tCat.textContent = categoryLabel(state.ticket.seat.category);
     els.tId.textContent = state.ticket.id;
 
-    await buildPdf();
     try {
-      await window.CCStore.addRegistration({
+      const save = await window.CCStore.addRegistration({
         name,
         seat: state.ticket.seat.code,
         category: categoryLabel(state.ticket.seat.category),
         ticketId: state.ticket.id,
         createdAt: new Date().toISOString(),
       });
+      if (save && save.source === "local") {
+        state.saveNote = "Ticket is ready. It is saved on this device. The shared list could not be updated.";
+      } else if (save && save.source === "shared") {
+        state.saveNote = "Ticket is ready and saved to the shared list.";
+      }
     } catch (err) {
-      console.warn(err);
+      const message = String(err.message || err);
+      if (/just taken|already registered/i.test(message)) {
+        els.formError.textContent = `${message} Pick another seat.`;
+        if (window.CCStore) {
+          try {
+            replaceTaken(await window.CCStore.takenSeats());
+          } catch {
+            addTaken([state.ticket.seat.code]);
+          }
+        }
+        state.ticket = null;
+        state.pdfDoc = null;
+        showStep(1);
+        return;
+      }
+      const why = window.CCStore.friendlyError
+        ? window.CCStore.friendlyError(message)
+        : message;
+      state.saveNote = `Ticket preview is ready. Registration may not have reached the shared list (${why}).`;
     }
+
     addTaken([state.ticket.seat.code]);
     if (window.CCStore) {
       window.CCStore.takenSeats().then(replaceTaken).catch(() => {});
     }
+
+    try {
+      await buildPdf();
+    } catch (err) {
+      state.pdfDoc = null;
+      if (els.ticketStatus) {
+        els.ticketStatus.textContent = `${state.saveNote ? `${state.saveNote} ` : ""}The PDF could not be built (${String(err.message || err)}). Try Download ticket again.`;
+      }
+      showStep(3);
+      return;
+    }
+
+    if (els.ticketStatus) els.ticketStatus.textContent = state.saveNote;
     showStep(3);
   }
 
-  function downloadPdf() {
-    if (!state.pdfDoc) return;
-    state.pdfDoc.save(window.CCTicket.fileName(state.ticket.seat.code, state.ticket.id));
+  async function ensurePdf() {
+    if (state.pdfDoc) return state.pdfDoc;
+    if (!state.ticket) return null;
+    return buildPdf();
+  }
+
+  async function downloadPdf() {
+    try {
+      const doc = await ensurePdf();
+      if (!doc || !state.ticket) {
+        if (els.ticketStatus) els.ticketStatus.textContent = "The PDF is not ready yet. Go back and create the ticket again.";
+        return;
+      }
+      doc.save(window.CCTicket.fileName(state.ticket.seat.code, state.ticket.id));
+    } catch (err) {
+      if (els.ticketStatus) els.ticketStatus.textContent = `Download failed. ${String(err.message || err)}`;
+    }
   }
 
   async function sharePdf() {
-    if (!state.pdfDoc || !state.ticket) return;
-    await window.CCTicket.shareTicketPdf(state.pdfDoc, {
-      name: state.ticket.name,
-      seat: state.ticket.seat.code,
-      id: state.ticket.id,
-    });
+    try {
+      const doc = await ensurePdf();
+      if (!doc || !state.ticket) {
+        if (els.ticketStatus) els.ticketStatus.textContent = "The PDF is not ready yet. Go back and create the ticket again.";
+        return;
+      }
+      await window.CCTicket.shareTicketPdf(doc, {
+        name: state.ticket.name,
+        seat: state.ticket.seat.code,
+        id: state.ticket.id,
+      });
+    } catch (err) {
+      if (els.ticketStatus) els.ticketStatus.textContent = `Share failed. ${String(err.message || err)}`;
+    }
+  }
+
+  async function refreshTaken(initial) {
+    if (!window.CCStore) {
+      if (els.hallStatus) els.hallStatus.textContent = "Seat list is stored on this device only.";
+      return;
+    }
+    if (initial && els.hallStatus) {
+      els.hallStatus.textContent = "Checking which seats are already taken.";
+    }
+    try {
+      const result = await window.CCStore.listRegistrations();
+      replaceTaken(result.items.map((item) => item.seat));
+      if (!els.hallStatus) return;
+      if (result.error) {
+        const why = window.CCStore.friendlyError
+          ? window.CCStore.friendlyError(result.error)
+          : result.error;
+        els.hallStatus.textContent = `Taken seats on this device are marked red. Shared list unavailable: ${why}.`;
+      } else if (result.source === "local") {
+        els.hallStatus.textContent = "Showing booked seats saved on this device.";
+      } else {
+        els.hallStatus.textContent = "Taken seats are marked red.";
+      }
+    } catch (err) {
+      if (els.hallStatus) {
+        const why = window.CCStore.friendlyError
+          ? window.CCStore.friendlyError(err.message || err)
+          : String(err.message || err);
+        els.hallStatus.textContent = `Could not refresh taken seats (${why}). Booked seats already on this device stay red.`;
+      }
+    }
   }
 
   els.blocks.addEventListener("click", (event) => {
@@ -196,6 +312,7 @@
   els.nextBtn.addEventListener("click", () => {
     if (!state.selected) return;
     els.formError.textContent = "";
+    if (els.formStatus) els.formStatus.textContent = "";
     showStep(2);
     els.doctorName.focus();
   });
@@ -211,7 +328,12 @@
       return;
     }
     els.formError.textContent = "";
-    await createTicket(name);
+    setCreating(true);
+    try {
+      await createTicket(name);
+    } finally {
+      setCreating(false);
+    }
   });
 
   els.downloadBtn.addEventListener("click", downloadPdf);
@@ -219,14 +341,14 @@
   els.newBooking.addEventListener("click", () => {
     state.ticket = null;
     state.pdfDoc = null;
+    state.saveNote = "";
     els.doctorName.value = "";
+    if (els.ticketStatus) els.ticketStatus.textContent = "";
     showStep(1);
   });
 
   loadTakenCache();
   hall.renderHall(els.blocks);
   paintSeats();
-  if (window.CCStore) {
-    window.CCStore.takenSeats().then(replaceTaken).catch(() => {});
-  }
+  refreshTaken(true);
 })();

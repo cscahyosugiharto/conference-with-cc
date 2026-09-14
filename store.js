@@ -223,10 +223,35 @@
     return { deleted: true, items: nextLocal };
   }
 
+  function friendlyError(error) {
+    let text = String(error || "").trim();
+    if (!text) return "";
+    try {
+      const parsed = JSON.parse(text);
+      if (parsed && typeof parsed.message === "string") text = parsed.message;
+    } catch {
+      /* keep original */
+    }
+    if (/email address not verified/i.test(text)) {
+      return "the shared list host has not verified this account";
+    }
+    if (/aborted|timeout|Failed to fetch|NetworkError/i.test(text)) {
+      return "the shared list did not respond in time";
+    }
+    text = text
+      .replace(/https?:\/\/\S+/gi, "")
+      .replace(/[{}"\[\]]/g, " ")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (text.length > 140) text = `${text.slice(0, 137)}...`;
+    return text || "the shared list could not be reached";
+  }
+
   window.CCStore = {
     listRegistrations,
     addRegistration,
     deleteRegistration,
+    friendlyError,
     takenSeats: async () => {
       const { items } = await listRegistrations();
       return new Set(items.map((item) => item.seat));

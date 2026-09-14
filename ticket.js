@@ -37,7 +37,7 @@
   }
 
   function fillField(doc, box, value, size) {
-    const text = String(value || "").trim() || "—";
+    const text = String(value || "").trim() || "-";
     const pad = 1.8;
     const maxW = box.w - pad * 2;
     let fontSize = size;
@@ -64,7 +64,7 @@
     doc.addImage(blank, "JPEG", 0, 0, PAGE.w, PAGE.h);
     fillField(doc, FIELDS.name, name, 12);
     fillField(doc, FIELDS.seat, seat, 12);
-    fillField(doc, FIELDS.category, category || "—", 12);
+    fillField(doc, FIELDS.category, category || "-", 12);
     fillField(doc, FIELDS.event, EVENT.name, 11);
     fillField(doc, FIELDS.id, id, 11);
     return doc;
