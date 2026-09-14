@@ -393,6 +393,11 @@
     els.shareBtn.classList.add("hidden");
   }
 
+  const legendDetails = document.getElementById("legend-details");
+  if (legendDetails && window.matchMedia("(max-width: 720px)").matches) {
+    legendDetails.open = false;
+  }
+
   renderLegend();
   renderSeats();
 })();

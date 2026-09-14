@@ -28,6 +28,8 @@ html,
 body {
   margin: 0;
   min-height: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -162,6 +164,11 @@ body::before {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 280px;
   gap: 20px;
+  min-width: 0;
+}
+
+.layout > * {
+  min-width: 0;
 }
 
 .hall-wrap {
@@ -170,7 +177,11 @@ body::before {
     linear-gradient(180deg, #f7f2e7, #efe7d6);
   border-radius: 18px;
   padding: 18px 16px 22px;
-  overflow: auto;
+  overflow-x: auto;
+  overflow-y: hidden;
+  max-width: 100%;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
 }
 
 .stage {
@@ -242,7 +253,8 @@ body::before {
   display: grid;
   grid-template-columns: 1fr 1.15fr 1fr;
   gap: 28px 36px;
-  min-width: 720px;
+  width: 100%;
+  min-width: 0;
   justify-items: center;
   padding: 8px 12px 10px;
 }
@@ -281,7 +293,15 @@ body::before {
   border-radius: 5px 5px 3px 3px;
   cursor: pointer;
   position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
   transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+}
+
+.seat::before {
+  content: "";
+  position: absolute;
+  inset: -4px;
 }
 
 .seat.premium {
@@ -396,6 +416,35 @@ body::before {
   letter-spacing: 0.18em;
   color: var(--muted);
   font-weight: 600;
+}
+
+.legend-simple {
+  display: grid;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.legend-details {
+  border-top: 1px solid rgba(12, 27, 51, 0.06);
+  padding-top: 8px;
+}
+
+.legend-details summary {
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--navy-mid);
+  padding: 6px 0;
+  list-style: none;
+}
+
+.legend-details summary::-webkit-details-marker {
+  display: none;
+}
+
+.legend-details summary::after {
+  content: " ▾";
+  color: var(--gold);
 }
 
 .legend-item {
@@ -614,6 +663,7 @@ input[type="text"]:focus {
 
   .topbar {
     flex-direction: column;
+    gap: 10px;
   }
 
   .quote {
@@ -627,12 +677,149 @@ input[type="text"]:focus {
 
 @media (max-width: 720px) {
   .app {
-    width: min(100% - 20px, 1240px);
-    padding-top: 16px;
+    width: 100%;
+    max-width: 100%;
+    padding: 14px 12px 28px;
+  }
+
+  .panel {
+    padding: 14px 10px 16px;
+    border-radius: 16px;
+  }
+
+  .eyebrow {
+    letter-spacing: 0.12em;
+    font-size: 0.62rem;
+  }
+
+  .brand h1 {
+    font-size: clamp(2rem, 11vw, 2.6rem);
+  }
+
+  .quote {
+    max-width: none;
+    font-size: 1rem;
+  }
+
+  .steps {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .step-pill {
+    justify-content: center;
+    padding: 8px 4px;
+    font-size: 0.68rem;
+    gap: 5px;
+  }
+
+  .hall-wrap {
+    padding: 12px 6px 14px;
+  }
+
+  .stage {
+    min-height: 68px;
+    margin-bottom: 12px;
+  }
+
+  .stage-kicker {
+    letter-spacing: 0.1em;
+    font-size: 0.52rem;
+  }
+
+  .stage-title {
+    font-size: 1.05rem;
+    padding: 0 8px;
+  }
+
+  .blocks {
+    gap: 16px 6px;
+    padding: 4px 0 6px;
+  }
+
+  .block {
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .block-label {
+    width: 22px;
+    height: 22px;
+    font-size: 0.72rem;
+  }
+
+  .seats {
+    gap: 3px;
   }
 
   .seat {
-    width: 22px;
-    height: 20px;
+    width: 13px;
+    height: 12px;
+  }
+
+  .seat::before {
+    inset: -6px -5px;
+  }
+
+  .meta-row {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-top: 12px;
+    text-align: center;
+  }
+
+  .meta-row .total-seats:last-of-type {
+    display: none;
+  }
+
+  .total-seats {
+    font-size: 1.25rem;
+  }
+
+  .side {
+    gap: 10px;
+  }
+
+  .side .actions {
+    position: sticky;
+    bottom: 10px;
+    z-index: 6;
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .ticket-right {
+    padding: 16px;
+  }
+
+  .ticket-right dl {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .ticket-right dd {
+    margin-bottom: 10px;
+  }
+
+  .footer {
+    font-size: 0.75rem;
+    padding: 0 8px;
+  }
+}
+
+@media (max-width: 430px) {
+  .blocks {
+    gap: 12px 4px;
+  }
+
+  .seat {
+    width: 12px;
+    height: 11px;
+    border-radius: 3px 3px 2px 2px;
+  }
+
+  .plant {
+    display: none;
   }
 }

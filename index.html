@@ -67,12 +67,24 @@
           <aside class="side">
             <div class="card">
               <h2>SEAT CATEGORIES</h2>
-              <div id="legend"></div>
-              <div class="legend-item">
-                <span class="swatch pick"></span>
-                <span>Kursi dipilih</span>
-                <span class="legend-meta">emerald</span>
+              <div class="legend-simple">
+                <div class="legend-item">
+                  <span class="swatch gold"></span>
+                  <span>Gold / Premium</span>
+                </div>
+                <div class="legend-item">
+                  <span class="swatch navy"></span>
+                  <span>Navy / Standard</span>
+                </div>
+                <div class="legend-item">
+                  <span class="swatch pick"></span>
+                  <span>Kursi dipilih</span>
+                </div>
               </div>
+              <details class="legend-details" id="legend-details" open>
+                <summary>Blok A–L</summary>
+                <div id="legend"></div>
+              </details>
             </div>
             <div class="card selected-box">
               <h2>KURSI TERPILIH</h2>
@@ -91,7 +103,7 @@
         <p class="hint">Masukkan nama dokter yang akan tercetak di tiket.</p>
         <form id="doctor-form" novalidate>
           <label for="doctor-name">Nama Dokter</label>
-          <input id="doctor-name" name="namaDokter" type="text" required minlength="2" maxlength="80" autocomplete="name" placeholder="contoh: dr. Andini Putri, Sp.PD">
+          <input id="doctor-name" name="namaDokter" type="text" required minlength="2" maxlength="80" autocomplete="name">
           <p class="error" id="form-error" role="alert"></p>
           <div class="actions" style="margin-top:18px">
             <button class="btn btn-gold" type="submit">Buat Tiket</button>
