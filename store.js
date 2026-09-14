@@ -1,9 +1,44 @@
 (() => {
   const cfg = window.CC_CONFIG || {};
   const localKey = cfg.localKey || "cc2026-registrations";
+  const deletedKey = "cc2026-deleted-ids";
+  const takenCacheKey = "cc2026-taken-cache";
   const bucket = cfg.store && cfg.store.bucket;
   const baseUrl = (cfg.store && cfg.store.baseUrl) || "https://kvdb.io";
   const remoteKey = "registrations";
+
+  function readDeleted() {
+    try {
+      return new Set(JSON.parse(localStorage.getItem(deletedKey) || "[]"));
+    } catch {
+      return new Set();
+    }
+  }
+
+  function writeDeleted(set) {
+    localStorage.setItem(deletedKey, JSON.stringify([...set]));
+  }
+
+  function markDeleted(ticketId) {
+    if (!ticketId) return;
+    const set = readDeleted();
+    set.add(ticketId);
+    writeDeleted(set);
+  }
+
+  function withoutDeleted(list) {
+    const deleted = readDeleted();
+    if (!deleted.size) return list;
+    return list.filter((row) => !row.ticketId || !deleted.has(row.ticketId));
+  }
+
+  function syncTakenCache(items) {
+    try {
+      localStorage.setItem(takenCacheKey, JSON.stringify(items.map((item) => item.seat)));
+    } catch {
+      /* ignore */
+    }
+  }
 
   function normalize(list) {
     return (Array.isArray(list) ? list : [])
@@ -81,33 +116,39 @@
     return normalize([...merged.values()]);
   }
 
+  function finishList(items, source, error) {
+    const clean = withoutDeleted(items);
+    syncTakenCache(clean);
+    return { items: clean, source, error: error || "" };
+  }
+
   async function listRegistrations() {
-    const local = readLocal();
+    const local = withoutDeleted(readLocal());
     try {
-      const remote = await readRemote();
+      const remote = withoutDeleted(await readRemote());
       const onlyLocal = local.filter((row) => !remote.some((item) => item.ticketId && item.ticketId === row.ticketId));
       if (onlyLocal.length) {
         try {
           await writeRemote(mergeRows(onlyLocal, remote));
-          const synced = await readRemote();
-          return { items: synced, source: "shared", error: "" };
+          const synced = withoutDeleted(await readRemote());
+          return finishList(synced, "shared", "");
         } catch (err) {
-          return {
-            items: mergeRows(local, remote),
-            source: remote.length ? "mixed" : "local",
-            error: String(err.message || err),
-          };
+          return finishList(
+            mergeRows(local, remote),
+            remote.length ? "mixed" : "local",
+            String(err.message || err),
+          );
         }
       }
-      if (remote.length) return { items: remote, source: "shared", error: "" };
+      if (remote.length) return finishList(remote, "shared", "");
       try {
         await writeRemote(remote);
-        return { items: local, source: "shared", error: "" };
+        return finishList(local, "shared", "");
       } catch (err) {
-        return { items: local, source: "local", error: String(err.message || err) };
+        return finishList(local, "local", String(err.message || err));
       }
     } catch (err) {
-      return { items: local, source: "local", error: String(err.message || err) };
+      return finishList(local, "local", String(err.message || err));
     }
   }
 
@@ -123,7 +164,7 @@
     let remote = null;
     let remoteError = "";
     try {
-      remote = await readRemote();
+      remote = withoutDeleted(await readRemote());
       if (remote.some((item) => item.seat === row.seat)) {
         throw new Error("Kursi ini sudah diambil peserta lain.");
       }
@@ -149,9 +190,43 @@
     return { saved: true, source: "local", error: remoteError };
   }
 
+  async function deleteRegistration({ ticketId, seat }) {
+    const local = readLocal();
+    const target = local.find((row) => (
+      (ticketId && row.ticketId === ticketId) || (!ticketId && seat && row.seat === seat)
+    )) || { ticketId, seat };
+    if (target.ticketId) markDeleted(target.ticketId);
+
+    const nextLocal = withoutDeleted(local.filter((row) => {
+      if (ticketId && row.ticketId === ticketId) return false;
+      if (!ticketId && seat && row.seat === seat) return false;
+      return true;
+    }));
+    writeLocal(nextLocal);
+
+    try {
+      const remote = await readRemote();
+      if (remote) {
+        const nextRemote = withoutDeleted(remote.filter((row) => {
+          if (ticketId && row.ticketId === ticketId) return false;
+          if (target.ticketId && row.ticketId === target.ticketId) return false;
+          if (!ticketId && seat && row.seat === seat) return false;
+          return true;
+        }));
+        await writeRemote(nextRemote);
+      }
+    } catch {
+      /* silent local fallback */
+    }
+
+    syncTakenCache(nextLocal);
+    return { deleted: true, items: nextLocal };
+  }
+
   window.CCStore = {
     listRegistrations,
     addRegistration,
+    deleteRegistration,
     takenSeats: async () => {
       const { items } = await listRegistrations();
       return new Set(items.map((item) => item.seat));

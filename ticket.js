@@ -104,5 +104,48 @@
     return doc;
   }
 
-  window.CCTicket = { EVENT, makeQrDataUrl, buildTicketPdf, fileName };
+  function shareText({ name, seat, id }) {
+    return [
+      EVENT.name,
+      `${EVENT.short} · ${EVENT.cc}`,
+      `Nama Dokter: ${name}`,
+      `Kursi: ${seat}`,
+      `Ticket ID: ${id}`,
+    ].join("\n");
+  }
+
+  async function shareTicketPdf(doc, meta) {
+    const filename = fileName(meta.seat, meta.id || "ticket");
+    const text = shareText(meta);
+    const blob = doc.output("blob");
+    const file = new File([blob], filename, { type: "application/pdf" });
+    try {
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: `${EVENT.short} ${meta.seat}`,
+          text,
+        });
+        return "shared";
+      }
+      if (typeof navigator.share === "function") {
+        await navigator.share({ title: `${EVENT.short} ${meta.seat}`, text });
+        doc.save(filename);
+        return "shared-text";
+      }
+    } catch (err) {
+      if (err && err.name === "AbortError") return "aborted";
+    }
+    try {
+      const wa = `https://wa.me/?text=${encodeURIComponent(text)}`;
+      window.open(wa, "_blank", "noopener");
+    } catch {
+      /* ignore popup blockers */
+    }
+    doc.save(filename);
+    return "downloaded";
+  }
+
+  window.CCTicket = { EVENT, makeQrDataUrl, buildTicketPdf, fileName, shareTicketPdf, shareText };
 })();
+

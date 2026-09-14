@@ -1,21 +1,6 @@
 (() => {
-  const BLOCKS = [
-    { id: "B", name: "Front Left", category: "standard", rows: 2, cols: 4 },
-    { id: "A", name: "Front Center", category: "premium", rows: 2, cols: 8 },
-    { id: "C", name: "Front Right", category: "standard", rows: 2, cols: 4 },
-    { id: "D", name: "Middle Left", category: "premium", rows: 3, cols: 6 },
-    { id: "E", name: "Middle Center", category: "premium", rows: 3, cols: 8 },
-    { id: "F", name: "Middle Right", category: "premium", rows: 3, cols: 6 },
-    { id: "G", name: "Rear Left", category: "standard", rows: 3, cols: 6 },
-    { id: "H", name: "Rear Center", category: "standard", rows: 3, cols: 6 },
-    { id: "I", name: "Rear Right", category: "standard", rows: 3, cols: 6 },
-    { id: "J", name: "Back Left", category: "standard", rows: 3, cols: 6 },
-    { id: "K", name: "Back Center", category: "standard", rows: 3, cols: 6 },
-    { id: "L", name: "Back Right", category: "standard", rows: 3, cols: 6 },
-  ];
-
-  const ORDER = ["B", "A", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L"];
-  const blockById = Object.fromEntries(BLOCKS.map((b) => [b.id, b]));
+  const hall = window.CCHall;
+  const { blockById, categoryLabel } = hall;
 
   const els = {
     blocks: document.getElementById("blocks"),
@@ -35,6 +20,7 @@
     tId: document.getElementById("t-id"),
     qrPreview: document.getElementById("qr-preview"),
     downloadBtn: document.getElementById("download-btn"),
+    shareBtn: document.getElementById("share-btn"),
     newBooking: document.getElementById("new-booking"),
     pills: document.querySelectorAll("[data-step-pill]"),
   };
@@ -65,59 +51,7 @@
     }
   }
 
-  function categoryLabel(category) {
-    return category === "premium" ? "Gold" : "Blue";
-  }
-
-  function renderSeats() {
-    let total = 0;
-    ORDER.forEach((id) => {
-      const block = blockById[id];
-      const wrap = document.createElement("div");
-      wrap.className = "block";
-      wrap.dataset.block = id;
-
-      const label = document.createElement("div");
-      label.className = "block-label";
-      label.textContent = id;
-      wrap.appendChild(label);
-
-      const grid = document.createElement("div");
-      grid.className = "seats";
-      grid.style.gridTemplateColumns = `repeat(${block.cols}, auto)`;
-
-      let n = 0;
-      for (let r = 0; r < block.rows; r += 1) {
-        for (let c = 0; c < block.cols; c += 1) {
-          n += 1;
-          total += 1;
-          const code = `${id}-${String(n).padStart(2, "0")}`;
-          const btn = document.createElement("button");
-          btn.type = "button";
-          btn.className = `seat ${block.category}`;
-          btn.dataset.code = code;
-          btn.dataset.block = id;
-          btn.dataset.category = block.category;
-          btn.setAttribute("aria-label", `Kursi ${code}, ${categoryLabel(block.category)}`);
-          btn.setAttribute("aria-pressed", "false");
-          btn.title = code;
-          grid.appendChild(btn);
-        }
-      }
-
-      wrap.appendChild(grid);
-      els.blocks.appendChild(wrap);
-    });
-
-    if (total !== 200) {
-      console.error(`Expected 200 seats, rendered ${total}`);
-    }
-    els.blocks.dataset.totalSeats = String(total);
-  }
-
-  function markTaken(seats) {
-    seats.forEach((code) => state.taken.add(code));
-    persistTakenCache();
+  function paintSeats() {
     els.blocks.querySelectorAll(".seat").forEach((btn) => {
       const taken = state.taken.has(btn.dataset.code);
       btn.classList.toggle("taken", taken);
@@ -130,8 +64,23 @@
           state.selected = null;
           updateSelection();
         }
+      } else {
+        btn.removeAttribute("aria-disabled");
+        btn.title = btn.dataset.code;
       }
     });
+  }
+
+  function addTaken(seats) {
+    seats.forEach((code) => state.taken.add(code));
+    persistTakenCache();
+    paintSeats();
+  }
+
+  function replaceTaken(seats) {
+    state.taken = new Set(seats);
+    persistTakenCache();
+    paintSeats();
   }
 
   function selectSeat(code) {
@@ -220,31 +169,35 @@
 
     await buildPdf();
     try {
-      const saved = await window.CCStore.addRegistration({
+      await window.CCStore.addRegistration({
         name,
         seat: state.ticket.seat.code,
         category: categoryLabel(state.ticket.seat.category),
         ticketId: state.ticket.id,
         createdAt: new Date().toISOString(),
       });
-      state.saveSource = saved.source;
     } catch (err) {
       console.warn(err);
     }
-    markTaken(new Set([state.ticket.seat.code]));
+    addTaken([state.ticket.seat.code]);
     if (window.CCStore) {
-      window.CCStore.takenSeats().then(markTaken).catch(() => {});
+      window.CCStore.takenSeats().then(replaceTaken).catch(() => {});
     }
     showStep(3);
   }
 
-  function fileName() {
-    return window.CCTicket.fileName(state.ticket.seat.code, state.ticket.id);
-  }
-
   function downloadPdf() {
     if (!state.pdfDoc) return;
-    state.pdfDoc.save(fileName());
+    state.pdfDoc.save(window.CCTicket.fileName(state.ticket.seat.code, state.ticket.id));
+  }
+
+  async function sharePdf() {
+    if (!state.pdfDoc || !state.ticket) return;
+    await window.CCTicket.shareTicketPdf(state.pdfDoc, {
+      name: state.ticket.name,
+      seat: state.ticket.seat.code,
+      id: state.ticket.id,
+    });
   }
 
   els.blocks.addEventListener("click", (event) => {
@@ -275,6 +228,7 @@
   });
 
   els.downloadBtn.addEventListener("click", downloadPdf);
+  els.shareBtn.addEventListener("click", sharePdf);
   els.newBooking.addEventListener("click", () => {
     state.ticket = null;
     state.pdfDoc = null;
@@ -283,9 +237,9 @@
   });
 
   loadTakenCache();
-  renderSeats();
-  markTaken(state.taken);
+  hall.renderHall(els.blocks);
+  paintSeats();
   if (window.CCStore) {
-    window.CCStore.takenSeats().then(markTaken).catch(() => {});
+    window.CCStore.takenSeats().then(replaceTaken).catch(() => {});
   }
 })();

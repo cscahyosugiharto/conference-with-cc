@@ -17,57 +17,115 @@
         <p class="eyebrow">ADMIN DASHBOARD</p>
         <h1>ICOS <span>2027 Admin</span></h1>
       </div>
-      <p class="quote">Pendaftaran kursi</p>
+      <button class="btn btn-ghost admin-logout hidden" id="logout-btn" type="button">Keluar</button>
     </header>
 
-    <section id="gate" class="panel form-panel">
-      <h2 class="stage-title" style="color:var(--navy);margin-top:0">Masuk admin</h2>
-      <p class="hint">Halaman ini menampilkan nama dokter dan kursi yang sudah terdaftar.</p>
-      <form id="gate-form">
-        <label for="admin-pass">Kata sandi</label>
-        <input id="admin-pass" type="password" autocomplete="current-password" required>
-        <p class="error" id="gate-error" role="alert"></p>
-        <div class="actions" style="margin-top:16px">
-          <button class="btn btn-gold" type="submit">Masuk</button>
-        </div>
-      </form>
+    <section id="gate" class="admin-gate-wrap">
+      <div class="panel admin-gate">
+        <h2 class="stage-title" style="color:var(--navy);margin-top:0">Masuk admin</h2>
+        <p class="hint">Masukkan kata sandi untuk melihat denah dan daftar pendaftar.</p>
+        <form id="gate-form">
+          <label for="admin-pass">Kata sandi</label>
+          <input id="admin-pass" type="password" autocomplete="current-password" required>
+          <p class="error" id="gate-error" role="alert"></p>
+          <div class="actions" style="margin-top:16px">
+            <button class="btn btn-gold" type="submit">Masuk</button>
+          </div>
+        </form>
+      </div>
     </section>
 
-    <section id="dash" class="panel hidden">
-      <div class="admin-toolbar">
+    <section id="dash" class="hidden">
+      <div class="layout">
         <div>
-          <h2 class="stage-title" style="color:var(--navy);margin:0">Daftar pendaftar</h2>
-          <p class="hint" id="store-status">Memuat…</p>
+          <div class="hall-wrap">
+            <div class="stage" aria-hidden="true">
+              <div class="plants">
+                <span class="plant p1"></span>
+                <span class="plant p2"></span>
+              </div>
+              <div class="stage-copy">
+                <div class="stage-kicker">ICOS · CC 2027</div>
+                <h2 class="stage-title">INTERNATIONAL CONFERENCE OF ORTHODONTIC SOCIETY 2027</h2>
+              </div>
+            </div>
+            <div class="podium" aria-hidden="true"></div>
+            <div id="admin-blocks" class="blocks" role="group" aria-label="Denah kursi admin ICOS 2027"></div>
+            <div class="hall-footer">
+              <div class="total-seats">
+                200
+                <small>TOTAL SEATS</small>
+              </div>
+              <div class="entrance">
+                <div class="door">
+                  <div class="arrow"></div>
+                  <span>ENTRANCE</span>
+                </div>
+              </div>
+              <div class="total-seats total-seats-end">
+                200
+                <small>KURSI TERSEDIA</small>
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="admin-actions">
-          <input id="filter" type="search" placeholder="Cari nama atau kursi" aria-label="Cari">
-          <button class="btn btn-ghost" id="refresh-btn" type="button">Muat ulang</button>
-          <button class="btn btn-ghost" id="export-btn" type="button">Unduh CSV</button>
-          <button class="btn btn-ghost" id="logout-btn" type="button">Keluar</button>
-        </div>
+        <aside class="side">
+          <div class="card">
+            <h2>SEAT CATEGORIES</h2>
+            <div class="legend-simple">
+              <div class="legend-item"><span class="swatch gold"></span><span>Gold</span></div>
+              <div class="legend-item"><span class="swatch navy"></span><span>Blue</span></div>
+              <div class="legend-item"><span class="swatch pick"></span><span>Kursi Dipilih</span></div>
+              <div class="legend-item"><span class="swatch taken"></span><span>Seat Sudah Terisi</span></div>
+            </div>
+          </div>
+          <div class="card selected-box">
+            <h2>DETAIL KURSI</h2>
+            <p class="seat-code" id="admin-seat-code">—</p>
+            <p id="admin-seat-meta">Klik satu kursi di denah.</p>
+            <div class="admin-seat-actions hidden" id="admin-seat-actions">
+              <button class="btn btn-gold btn-compact" id="admin-seat-pdf" type="button">Bagikan PDF</button>
+              <button class="btn btn-danger btn-compact" id="admin-seat-delete" type="button">Hapus</button>
+            </div>
+          </div>
+        </aside>
       </div>
-      <p class="admin-count" id="count-line">0 pendaftar</p>
-      <div class="table-wrap">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>Nama Dokter</th>
-              <th>Kursi</th>
-              <th>Kategori</th>
-              <th>Waktu</th>
-              <th>Ticket ID</th>
-              <th>Tiket</th>
-            </tr>
-          </thead>
-          <tbody id="rows">
-            <tr><td colspan="6">Belum ada data.</td></tr>
-          </tbody>
-        </table>
+
+      <div class="panel admin-list-panel">
+        <div class="admin-toolbar">
+          <div>
+            <h2 class="stage-title" style="color:var(--navy);margin:0">Daftar pendaftar</h2>
+            <p class="admin-count" id="count-line">0 pendaftar</p>
+          </div>
+          <div class="admin-actions">
+            <input id="filter" type="search" placeholder="Cari nama atau kursi" aria-label="Cari">
+            <button class="btn btn-ghost" id="refresh-btn" type="button">Muat ulang</button>
+            <button class="btn btn-ghost" id="export-btn" type="button">Unduh CSV</button>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>Nama Dokter</th>
+                <th>Kursi</th>
+                <th>Kategori</th>
+                <th>Waktu</th>
+                <th>Ticket ID</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody id="rows">
+              <tr><td colspan="6">Belum ada data.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
     </section>
   </div>
   <script src="config.js"></script>
   <script src="store.js"></script>
+  <script src="hall.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/qrcode.min.js"></script>
   <script src="ticket.js"></script>
