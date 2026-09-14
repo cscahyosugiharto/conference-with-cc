@@ -45,7 +45,7 @@ jobs:
       - name: Prepare site
         run: |
           mkdir -p _site/vendor
-          cp index.html styles.css app.js favicon.svg 404.html .nojekyll README.md _site/
+          cp index.html admin.html styles.css app.js admin.js store.js config.js favicon.svg 404.html .nojekyll README.md _site/
           cp vendor/*.js _site/vendor/
       - name: Configure Pages
         uses: actions/configure-pages@v5

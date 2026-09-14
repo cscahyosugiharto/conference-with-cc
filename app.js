@@ -115,7 +115,26 @@
     els.blocks.dataset.totalSeats = String(total);
   }
 
+  function markTaken(seats) {
+    els.blocks.querySelectorAll(".seat").forEach((btn) => {
+      const taken = seats.has(btn.dataset.code);
+      btn.classList.toggle("taken", taken);
+      btn.disabled = taken;
+      if (taken) {
+        btn.setAttribute("aria-disabled", "true");
+        btn.title = `${btn.dataset.code} · sudah terisi`;
+        if (btn.getAttribute("aria-pressed") === "true") {
+          btn.setAttribute("aria-pressed", "false");
+          state.selected = null;
+          updateSelection();
+        }
+      }
+    });
+  }
+
   function selectSeat(code) {
+    const target = els.blocks.querySelector(`[data-code="${code}"]`);
+    if (!target || target.disabled) return;
     const prev = els.blocks.querySelector('.seat[aria-pressed="true"]');
     if (prev && prev.dataset.code === code) {
       prev.setAttribute("aria-pressed", "false");
@@ -316,6 +335,18 @@
     }
 
     await buildPdf();
+    try {
+      const saved = await window.CCStore.addRegistration({
+        name,
+        seat: state.ticket.seat.code,
+        category: categoryLabel(state.ticket.seat.category),
+        ticketId: state.ticket.id,
+        createdAt: new Date().toISOString(),
+      });
+      state.saveSource = saved.source;
+    } catch (err) {
+      console.warn(err);
+    }
     showStep(3);
   }
 
@@ -400,4 +431,7 @@
 
   renderLegend();
   renderSeats();
+  if (window.CCStore) {
+    window.CCStore.takenSeats().then(markTaken).catch(() => {});
+  }
 })();

@@ -339,6 +339,15 @@ body::before {
   box-shadow: 0 0 0 2px #ecfdf5, 0 0 0 4px var(--selected-deep);
 }
 
+.seat.taken,
+.seat:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  filter: grayscale(0.4);
+  transform: none;
+  box-shadow: none;
+}
+
 .aisle-note,
 .meta-row {
   display: flex;
@@ -820,6 +829,73 @@ input[type="text"]:focus {
   }
 
   .plant {
+    display: none;
+  }
+}
+
+.admin-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.admin-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.admin-actions input[type="search"] {
+  min-width: min(220px, 100%);
+  border: 1px solid rgba(12, 27, 51, 0.12);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.admin-count {
+  font-weight: 600;
+  color: var(--navy);
+  margin: 12px 0;
+}
+
+.table-wrap {
+  overflow-x: auto;
+  max-width: 100%;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.92rem;
+}
+
+.admin-table th,
+.admin-table td {
+  text-align: left;
+  padding: 10px 8px;
+  border-bottom: 1px solid rgba(12, 27, 51, 0.08);
+  vertical-align: top;
+}
+
+.admin-table th {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.admin-table .mono {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.8rem;
+}
+
+@media (max-width: 720px) {
+  .admin-table th:nth-child(5),
+  .admin-table td:nth-child(5) {
     display: none;
   }
 }

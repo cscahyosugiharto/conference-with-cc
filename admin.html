@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Admin — Conference with CC</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="app admin-app">
+    <header class="topbar">
+      <div class="brand">
+        <p class="eyebrow">ADMIN DASHBOARD</p>
+        <h1>Conference <span>with CC</span></h1>
+      </div>
+      <p class="quote">Pendaftaran kursi</p>
+    </header>
+
+    <section id="gate" class="panel form-panel">
+      <h2 class="stage-title" style="color:var(--navy);margin-top:0">Masuk admin</h2>
+      <p class="hint">Halaman ini menampilkan nama dokter dan kursi yang sudah terdaftar.</p>
+      <form id="gate-form">
+        <label for="admin-pass">Kata sandi</label>
+        <input id="admin-pass" type="password" autocomplete="current-password" required>
+        <p class="error" id="gate-error" role="alert"></p>
+        <div class="actions" style="margin-top:16px">
+          <button class="btn btn-gold" type="submit">Masuk</button>
+        </div>
+      </form>
+    </section>
+
+    <section id="dash" class="panel hidden">
+      <div class="admin-toolbar">
+        <div>
+          <h2 class="stage-title" style="color:var(--navy);margin:0">Daftar pendaftar</h2>
+          <p class="hint" id="store-status">Memuat…</p>
+        </div>
+        <div class="admin-actions">
+          <input id="filter" type="search" placeholder="Cari nama atau kursi" aria-label="Cari">
+          <button class="btn btn-ghost" id="refresh-btn" type="button">Muat ulang</button>
+          <button class="btn btn-ghost" id="export-btn" type="button">Unduh CSV</button>
+          <button class="btn btn-ghost" id="logout-btn" type="button">Keluar</button>
+        </div>
+      </div>
+      <p class="admin-count" id="count-line">0 pendaftar</p>
+      <div class="table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>Nama Dokter</th>
+              <th>Kursi</th>
+              <th>Kategori</th>
+              <th>Waktu</th>
+              <th>Ticket ID</th>
+            </tr>
+          </thead>
+          <tbody id="rows">
+            <tr><td colspan="5">Belum ada data.</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <script src="config.js"></script>
+  <script src="store.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

@@ -13,7 +13,15 @@ Enable Pages once (repo admin): [Settings → Pages](https://github.com/cscahyos
 3. Enter **Nama Dokter** → generate a navy/gold/cream **PDF ticket** with QR-style code.
 4. **Unduh Tiket**, **Bagikan ke WhatsApp** (`wa.me`), and Web Share when the browser supports it.
 
-Static site only — no backend and no payment.
+5. Admin list: [admin.html](https://cscahyosugiharto.github.io/conference-with-cc/admin.html) — password `cc2026`.
+
+Static site — no payment.
+
+### How registrations are stored
+
+- After **Buat Tiket**, the app saves **Nama Dokter**, seat, time, and ticket ID.
+- Shared store: public **[KVdb](https://kvdb.io)** bucket `3tdu2SXQJAP687RXTrZFb4` (CORS open). Activate writes by verifying the bucket email at [kvdb.io/login](https://kvdb.io/login) (sent to the repo owner). Then every phone and the admin page share one list.
+- Fallback: **localStorage** on that browser only, so admin still works on the same device if KVdb writes are blocked.
 
 ## Local preview
 
@@ -23,7 +31,7 @@ Open `index.html` or:
 python3 -m http.server 8080
 ```
 
-Then visit `http://localhost:8080`.
+Then visit `http://localhost:8080` and `http://localhost:8080/admin.html`.
 
 ## Seat layout
 
