@@ -46,16 +46,19 @@
     });
     els.count.textContent = `${cache.length} pendaftar${q ? ` · ${rows.length} ditampilkan` : ""}`;
     if (!rows.length) {
-      els.rows.innerHTML = `<tr><td colspan="5">${cache.length ? "Tidak ada hasil." : "Belum ada pendaftar."}</td></tr>`;
+      els.rows.innerHTML = `<tr><td colspan="6">${cache.length ? "Tidak ada hasil." : "Belum ada pendaftar."}</td></tr>`;
       return;
     }
-    els.rows.innerHTML = rows.map((row) => `
+    els.rows.innerHTML = rows.map((row, idx) => `
       <tr>
         <td>${escapeHtml(row.name)}</td>
         <td><strong>${escapeHtml(row.seat)}</strong></td>
         <td>${escapeHtml(row.category || "—")}</td>
         <td>${escapeHtml(formatWhen(row.createdAt))}</td>
         <td class="mono">${escapeHtml(row.ticketId || "—")}</td>
+        <td>
+          <button class="btn btn-gold btn-compact" type="button" data-pdf-index="${idx}">Bagikan PDF</button>
+        </td>
       </tr>
     `).join("");
   }
@@ -102,6 +105,16 @@
     URL.revokeObjectURL(url);
   }
 
+  async function downloadRowPdf(row) {
+    const doc = await window.CCTicket.buildTicketPdf({
+      name: row.name,
+      seat: row.seat,
+      category: row.category || "—",
+      id: row.ticketId || "CC-2027",
+    });
+    doc.save(window.CCTicket.fileName(row.seat, row.ticketId || "ticket"));
+  }
+
   function csv(value) {
     const text = String(value || "");
     if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`;
@@ -118,6 +131,24 @@
     els.error.textContent = "";
     showDash(true);
     load();
+  });
+
+  els.rows.addEventListener("click", async (event) => {
+    const btn = event.target.closest("[data-pdf-index]");
+    if (!btn) return;
+    const q = (els.filter.value || "").trim().toLowerCase();
+    const rows = cache.filter((row) => {
+      if (!q) return true;
+      return [row.name, row.seat, row.ticketId, row.category].join(" ").toLowerCase().includes(q);
+    });
+    const row = rows[Number(btn.dataset.pdfIndex)];
+    if (!row) return;
+    btn.disabled = true;
+    try {
+      await downloadRowPdf(row);
+    } finally {
+      btn.disabled = false;
+    }
   });
 
   els.filter.addEventListener("input", render);

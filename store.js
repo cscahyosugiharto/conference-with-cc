@@ -48,7 +48,7 @@
   async function writeRemote(list) {
     if (!bucket) throw new Error("Store belum dikonfigurasi");
     const payload = {
-      event: "Conference with CC 2026",
+      event: "International Conference of Orthodontic Society 2027",
       updatedAt: new Date().toISOString(),
       items: normalize(list),
     };

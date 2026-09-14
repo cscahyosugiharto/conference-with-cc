@@ -19,7 +19,6 @@
 
   const els = {
     blocks: document.getElementById("blocks"),
-    legend: document.getElementById("legend"),
     selectedCode: document.getElementById("selected-code"),
     selectedMeta: document.getElementById("selected-meta"),
     nextBtn: document.getElementById("next-btn"),
@@ -36,37 +35,38 @@
     tId: document.getElementById("t-id"),
     qrPreview: document.getElementById("qr-preview"),
     downloadBtn: document.getElementById("download-btn"),
-    waBtn: document.getElementById("wa-btn"),
-    shareBtn: document.getElementById("share-btn"),
     newBooking: document.getElementById("new-booking"),
     pills: document.querySelectorAll("[data-step-pill]"),
   };
+
+  const TAKEN_CACHE = "cc2026-taken-cache";
 
   const state = {
     selected: null,
     ticket: null,
     pdfDoc: null,
+    taken: new Set(),
   };
 
-  function seatCount(block) {
-    return block.rows * block.cols;
+  function persistTakenCache() {
+    try {
+      localStorage.setItem(TAKEN_CACHE, JSON.stringify([...state.taken]));
+    } catch {
+      /* ignore quota / private mode */
+    }
+  }
+
+  function loadTakenCache() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(TAKEN_CACHE) || "[]");
+      if (Array.isArray(raw)) raw.forEach((id) => state.taken.add(id));
+    } catch {
+      /* ignore bad cache */
+    }
   }
 
   function categoryLabel(category) {
-    return category === "premium" ? "Gold / Premium" : "Navy / Standard";
-  }
-
-  function renderLegend() {
-    const html = ORDER.map((id) => {
-      const block = blockById[id];
-      return `
-        <div class="legend-item">
-          <span class="swatch ${block.category === "premium" ? "gold" : "navy"}"></span>
-          <span><strong>${id}</strong> · ${block.name}</span>
-          <span class="legend-meta">${seatCount(block)} kursi</span>
-        </div>`;
-    }).join("");
-    els.legend.insertAdjacentHTML("afterbegin", html);
+    return category === "premium" ? "Gold" : "Blue";
   }
 
   function renderSeats() {
@@ -116,8 +116,10 @@
   }
 
   function markTaken(seats) {
+    seats.forEach((code) => state.taken.add(code));
+    persistTakenCache();
     els.blocks.querySelectorAll(".seat").forEach((btn) => {
-      const taken = seats.has(btn.dataset.code);
+      const taken = state.taken.has(btn.dataset.code);
       btn.classList.toggle("taken", taken);
       btn.disabled = taken;
       if (taken) {
@@ -180,135 +182,17 @@
   function makeTicketId() {
     const rand = Math.random().toString(36).toUpperCase().slice(2, 6);
     const time = Date.now().toString(36).toUpperCase().slice(-4);
-    return `CC-2026-${rand}${time}`;
-  }
-
-  function ticketPayload() {
-    return {
-      event: "Conference with CC 2026",
-      name: state.ticket.name,
-      seat: state.ticket.seat.code,
-      category: categoryLabel(state.ticket.seat.category),
-      date: "Conference with CC 2026",
-      id: state.ticket.id,
-    };
-  }
-
-  function ticketText() {
-    const t = ticketPayload();
-    return [
-      "Conference with CC 2026",
-      `Nama Dokter: ${t.name}`,
-      `Kursi: ${t.seat} (${t.category})`,
-      `Ticket ID: ${t.id}`,
-      "A Brighter Tomorrow Together",
-    ].join("\n");
-  }
-
-  function waUrl() {
-    return `https://wa.me/?text=${encodeURIComponent(ticketText())}`;
-  }
-
-  function makeQrDataUrl(text) {
-    return new Promise((resolve, reject) => {
-      const holder = document.createElement("div");
-      holder.style.cssText = "position:absolute;left:-9999px;top:0;";
-      document.body.appendChild(holder);
-      try {
-        const qr = new QRCode(holder, {
-          text,
-          width: 220,
-          height: 220,
-          colorDark: "#0c1b33",
-          colorLight: "#ffffff",
-          correctLevel: QRCode.CorrectLevel.M,
-        });
-        const grab = () => {
-          const img = holder.querySelector("img");
-          const canvas = holder.querySelector("canvas");
-          let url = "";
-          if (canvas) url = canvas.toDataURL("image/png");
-          else if (img && img.src) url = img.src;
-          holder.remove();
-          if (!url) reject(new Error("QR tidak terbuat"));
-          else resolve(url);
-        };
-        requestAnimationFrame(() => setTimeout(grab, 40));
-        void qr;
-      } catch (err) {
-        holder.remove();
-        reject(err);
-      }
-    });
+    return `CC-2027-${rand}${time}`;
   }
 
   async function buildPdf() {
-    const t = ticketPayload();
-    const qr = await makeQrDataUrl(`${t.event}|${t.id}|${t.seat}|${t.name}`);
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation: "landscape", unit: "mm", format: [210, 100] });
-
-    doc.setFillColor(244, 239, 228);
-    doc.rect(0, 0, 210, 100, "F");
-
-    doc.setFillColor(12, 27, 51);
-    doc.rect(0, 0, 68, 100, "F");
-
-    doc.setFillColor(198, 162, 78);
-    doc.rect(68, 0, 2.2, 100, "F");
-    doc.rect(0, 0, 210, 3, "F");
-    doc.rect(0, 97, 210, 3, "F");
-
-    doc.setTextColor(216, 182, 90);
-    doc.setFont("times", "italic");
-    doc.setFontSize(8);
-    doc.text("CONNECT  •  LEARN  •  GROW TOGETHER", 8, 14);
-
-    doc.setFont("times", "bold");
-    doc.setFontSize(16);
-    doc.text("Conference", 8, 28);
-    doc.text("with CC", 8, 35);
-
-    doc.setFontSize(8);
-    doc.setFont("times", "italic");
-    doc.text("A Brighter Tomorrow Together", 8, 44);
-
-    doc.addImage(qr, "PNG", 12, 54, 36, 36);
-
-    doc.setTextColor(12, 27, 51);
-    doc.setFont("times", "bold");
-    doc.setFontSize(11);
-    doc.text("ADMIT ONE  ·  PREMIUM TICKET", 80, 16);
-
-    doc.setFontSize(8);
-    doc.setTextColor(92, 102, 118);
-    doc.setFont("helvetica", "normal");
-    const rows = [
-      ["NAMA DOKTER", t.name],
-      ["KODE KURSI", t.seat],
-      ["KATEGORI", t.category],
-      ["TANGGAL", t.date],
-      ["TICKET ID", t.id],
-    ];
-    let y = 30;
-    rows.forEach(([label, value]) => {
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(7.5);
-      doc.setTextColor(92, 102, 118);
-      doc.text(label, 80, y);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(13);
-      doc.setTextColor(12, 27, 51);
-      doc.text(String(value), 80, y + 6);
-      y += 14;
+    state.pdfDoc = await window.CCTicket.buildTicketPdf({
+      name: state.ticket.name,
+      seat: state.ticket.seat.code,
+      category: categoryLabel(state.ticket.seat.category),
+      id: state.ticket.id,
     });
-
-    doc.setDrawColor(198, 162, 78);
-    doc.setLineWidth(0.3);
-    doc.line(80, 22, 198, 22);
-
-    state.pdfDoc = doc;
-    return doc;
+    return state.pdfDoc;
   }
 
   async function createTicket(name) {
@@ -324,7 +208,7 @@
 
     els.qrPreview.innerHTML = "";
     try {
-      const qr = await makeQrDataUrl(`${state.ticket.id}|${state.ticket.seat.code}|${name}`);
+      const qr = await window.CCTicket.makeQrDataUrl(`${state.ticket.id}|${state.ticket.seat.code}|${name}`);
       const img = document.createElement("img");
       img.alt = "Kode tiket";
       img.src = qr;
@@ -347,38 +231,20 @@
     } catch (err) {
       console.warn(err);
     }
+    markTaken(new Set([state.ticket.seat.code]));
+    if (window.CCStore) {
+      window.CCStore.takenSeats().then(markTaken).catch(() => {});
+    }
     showStep(3);
   }
 
   function fileName() {
-    return `Conference-CC-2026-${state.ticket.seat.code}-${state.ticket.id}.pdf`;
+    return window.CCTicket.fileName(state.ticket.seat.code, state.ticket.id);
   }
 
   function downloadPdf() {
     if (!state.pdfDoc) return;
     state.pdfDoc.save(fileName());
-  }
-
-  async function shareTicket() {
-    const text = ticketText();
-    if (!state.pdfDoc) await buildPdf();
-    const blob = state.pdfDoc.output("blob");
-    const file = new File([blob], fileName(), { type: "application/pdf" });
-
-    try {
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({ title: "Conference with CC", text, files: [file] });
-        return;
-      }
-      if (navigator.share) {
-        await navigator.share({ title: "Conference with CC", text });
-        return;
-      }
-    } catch (err) {
-      if (err && err.name === "AbortError") return;
-    }
-    downloadPdf();
-    window.open(waUrl(), "_blank", "noopener");
   }
 
   els.blocks.addEventListener("click", (event) => {
@@ -409,10 +275,6 @@
   });
 
   els.downloadBtn.addEventListener("click", downloadPdf);
-  els.waBtn.addEventListener("click", () => {
-    window.open(waUrl(), "_blank", "noopener");
-  });
-  els.shareBtn.addEventListener("click", shareTicket);
   els.newBooking.addEventListener("click", () => {
     state.ticket = null;
     state.pdfDoc = null;
@@ -420,17 +282,9 @@
     showStep(1);
   });
 
-  if (!navigator.share) {
-    els.shareBtn.classList.add("hidden");
-  }
-
-  const legendDetails = document.getElementById("legend-details");
-  if (legendDetails && window.matchMedia("(max-width: 720px)").matches) {
-    legendDetails.open = false;
-  }
-
-  renderLegend();
+  loadTakenCache();
   renderSeats();
+  markTaken(state.taken);
   if (window.CCStore) {
     window.CCStore.takenSeats().then(markTaken).catch(() => {});
   }

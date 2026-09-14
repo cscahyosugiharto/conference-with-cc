@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Conference with CC — Pilih Kursi & Tiket</title>
-  <meta name="description" content="Pilih kursi dan unduh tiket Conference with CC 2026. CONNECT • LEARN • GROW TOGETHER.">
+  <title>International Conference of Orthodontic Society 2027 — Pilih Kursi</title>
+  <meta name="description" content="Pilih kursi dan unduh tiket International Conference of Orthodontic Society 2027 (ICOS / CC 2027).">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -17,9 +17,9 @@
     <header class="topbar">
       <div class="brand">
         <p class="eyebrow">CONNECT • LEARN • GROW TOGETHER</p>
-        <h1>Conference <span>with CC</span></h1>
+        <h1>International Conference <span>of Orthodontic Society 2027</span></h1>
       </div>
-      <p class="quote">“Same Vision<br>Higher Impact”</p>
+      <p class="quote">ICOS 2027<br>CC 2027</p>
     </header>
 
     <nav class="steps" aria-label="Langkah pemesanan">
@@ -39,13 +39,13 @@
                   <span class="plant p2"></span>
                 </div>
                 <div class="stage-copy">
-                  <div class="stage-kicker">PEOPLE • IDEAS • KNOWLEDGE</div>
-                  <h2 class="stage-title">A BRIGHTER TOMORROW TOGETHER</h2>
+                  <div class="stage-kicker">ICOS · CC 2027</div>
+                  <h2 class="stage-title">INTERNATIONAL CONFERENCE OF ORTHODONTIC SOCIETY 2027</h2>
                 </div>
               </div>
               <div class="podium" aria-hidden="true"></div>
-              <div id="blocks" class="blocks" role="group" aria-label="Denah kursi Conference with CC"></div>
-              <div class="meta-row">
+              <div id="blocks" class="blocks" role="group" aria-label="Denah kursi ICOS 2027"></div>
+              <div class="hall-footer">
                 <div class="total-seats">
                   200
                   <small>TOTAL SEATS</small>
@@ -56,7 +56,7 @@
                     <span>ENTRANCE</span>
                   </div>
                 </div>
-                <div class="total-seats" style="text-align:right">
+                <div class="total-seats total-seats-end">
                   200
                   <small>KURSI TERSEDIA</small>
                 </div>
@@ -70,21 +70,21 @@
               <div class="legend-simple">
                 <div class="legend-item">
                   <span class="swatch gold"></span>
-                  <span>Gold / Premium</span>
+                  <span>Gold</span>
                 </div>
                 <div class="legend-item">
                   <span class="swatch navy"></span>
-                  <span>Navy / Standard</span>
+                  <span>Blue</span>
                 </div>
                 <div class="legend-item">
                   <span class="swatch pick"></span>
-                  <span>Kursi dipilih</span>
+                  <span>Kursi Dipilih</span>
+                </div>
+                <div class="legend-item">
+                  <span class="swatch taken"></span>
+                  <span>Seat Sudah Terisi</span>
                 </div>
               </div>
-              <details class="legend-details" id="legend-details" open>
-                <summary>Blok A–L</summary>
-                <div id="legend"></div>
-              </details>
             </div>
             <div class="card selected-box">
               <h2>KURSI TERPILIH</h2>
@@ -117,8 +117,8 @@
         <div class="ticket-card" id="ticket-card">
           <div class="ticket-left">
             <div>
-              <div class="stage-kicker">CONFERENCE WITH CC 2026</div>
-              <h3>A Brighter Tomorrow Together</h3>
+              <div class="stage-kicker">ICOS 2027 · CC 2027</div>
+              <h3>International Conference of Orthodontic Society 2027</h3>
             </div>
             <div class="qr-box" id="qr-preview" aria-hidden="true"></div>
           </div>
@@ -130,8 +130,8 @@
               <dd id="t-seat"></dd>
               <dt>Kategori</dt>
               <dd id="t-cat"></dd>
-              <dt>Tanggal</dt>
-              <dd>Conference with CC 2026</dd>
+              <dt>Acara</dt>
+              <dd>International Conference of Orthodontic Society 2027</dd>
               <dt>Ticket ID</dt>
               <dd id="t-id"></dd>
             </dl>
@@ -139,15 +139,13 @@
         </div>
         <div class="actions" style="margin-top:18px">
           <button class="btn btn-gold" id="download-btn" type="button">Unduh Tiket</button>
-          <button class="btn btn-whatsapp" id="wa-btn" type="button">Bagikan ke WhatsApp</button>
-          <button class="btn btn-ghost" id="share-btn" type="button">Bagikan</button>
           <button class="btn btn-ghost" id="new-booking" type="button">Pilih kursi lain</button>
         </div>
       </section>
     </main>
 
     <footer class="footer">
-      People together for a brighter tomorrow · More people, greater possibilities
+      International Conference of Orthodontic Society 2027 · ICOS · CC 2027
     </footer>
   </div>
 
@@ -155,6 +153,7 @@
   <script src="store.js"></script>
   <script src="vendor/jspdf.umd.min.js"></script>
   <script src="vendor/qrcode.min.js"></script>
+  <script src="ticket.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

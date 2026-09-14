@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Admin — Conference with CC</title>
+  <title>Admin — ICOS 2027</title>
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +15,7 @@
     <header class="topbar">
       <div class="brand">
         <p class="eyebrow">ADMIN DASHBOARD</p>
-        <h1>Conference <span>with CC</span></h1>
+        <h1>ICOS <span>2027 Admin</span></h1>
       </div>
       <p class="quote">Pendaftaran kursi</p>
     </header>
@@ -56,10 +56,11 @@
               <th>Kategori</th>
               <th>Waktu</th>
               <th>Ticket ID</th>
+              <th>Tiket</th>
             </tr>
           </thead>
           <tbody id="rows">
-            <tr><td colspan="5">Belum ada data.</td></tr>
+            <tr><td colspan="6">Belum ada data.</td></tr>
           </tbody>
         </table>
       </div>
@@ -67,6 +68,9 @@
   </div>
   <script src="config.js"></script>
   <script src="store.js"></script>
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="vendor/qrcode.min.js"></script>
+  <script src="ticket.js"></script>
   <script src="admin.js"></script>
 </body>
 </html>
