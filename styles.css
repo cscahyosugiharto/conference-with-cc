@@ -639,11 +639,11 @@ input[type="search"]:focus {
   box-sizing: border-box;
 }
 
-.tf-name { left: 17.344%; top: 40.170%; width: 44.139%; height: 4.782%; font-size: clamp(0.62rem, 1.7vw, 1.05rem); }
-.tf-seat { left: 17.344%; top: 47.078%; width: 23.445%; height: 4.888%; font-size: clamp(0.62rem, 1.7vw, 1.05rem); }
-.tf-cat { left: 17.344%; top: 53.985%; width: 32.476%; height: 4.888%; font-size: clamp(0.62rem, 1.7vw, 1.05rem); }
-.tf-event { left: 17.344%; top: 60.999%; width: 44.079%; height: 4.782%; font-size: clamp(0.5rem, 1.35vw, 0.82rem); }
-.tf-id { left: 17.404%; top: 68.013%; width: 23.385%; height: 4.676%; font-size: clamp(0.55rem, 1.5vw, 0.92rem); }
+.tf-name { left: 16.341%; top: 40.332%; width: 56.380%; height: 4.004%; font-size: clamp(0.62rem, 1.7vw, 1.05rem); }
+.tf-seat { left: 16.341%; top: 46.387%; width: 56.380%; height: 4.004%; font-size: clamp(0.62rem, 1.7vw, 1.05rem); }
+.tf-cat { left: 16.406%; top: 52.246%; width: 56.315%; height: 4.004%; font-size: clamp(0.62rem, 1.7vw, 1.05rem); }
+.tf-event { left: 16.341%; top: 57.910%; width: 56.380%; height: 4.102%; font-size: clamp(0.55rem, 1.5vw, 0.95rem); }
+.tf-id { left: 16.341%; top: 63.867%; width: 56.315%; height: 3.906%; font-size: clamp(0.55rem, 1.5vw, 0.95rem); }
 
 .ticket-actions {
   max-width: 420px;

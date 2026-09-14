@@ -6,14 +6,14 @@
     tagline: "SHAPING TOMORROW IN ORTHODONTICS",
   };
 
-  const BLANK_SRC = "assets/ticket-blank.jpg";
-  const PAGE = { w: 210, h: 118.19 };
+  const BLANK_SRC = "assets/ticket-blank-v2.jpg";
+  const PAGE = { w: 210, h: 140 };
   const FIELDS = {
-    name: { x: 36.42, y: 47.48, w: 92.69, h: 5.65 },
-    seat: { x: 36.42, y: 55.64, w: 49.23, h: 5.78 },
-    category: { x: 36.42, y: 63.80, w: 68.20, h: 5.78 },
-    event: { x: 36.42, y: 72.09, w: 92.57, h: 5.65 },
-    id: { x: 36.55, y: 80.38, w: 49.11, h: 5.53 },
+    name: { x: 34.32, y: 56.46, w: 118.40, h: 5.61 },
+    seat: { x: 34.32, y: 64.94, w: 118.40, h: 5.61 },
+    category: { x: 34.45, y: 73.14, w: 118.26, h: 5.61 },
+    event: { x: 34.32, y: 81.07, w: 118.40, h: 5.74 },
+    id: { x: 34.32, y: 89.41, w: 118.26, h: 5.47 },
   };
 
   let blankDataUrl = "";
@@ -65,8 +65,8 @@
     fillField(doc, FIELDS.name, name, 12);
     fillField(doc, FIELDS.seat, seat, 12);
     fillField(doc, FIELDS.category, category || "—", 12);
-    fillField(doc, FIELDS.event, EVENT.name, 9.5);
-    fillField(doc, FIELDS.id, id, 10);
+    fillField(doc, FIELDS.event, EVENT.name, 11);
+    fillField(doc, FIELDS.id, id, 11);
     return doc;
   }
 
