@@ -4,15 +4,17 @@ Seating chart and ticket generator for **ICOS 2027** / **CC 2027**.
 
 **Live site:** [https://cscahyosugiharto.github.io/conference-with-cc/](https://cscahyosugiharto.github.io/conference-with-cc/)
 
-**Admin:** [admin.html](https://cscahyosugiharto.github.io/conference-with-cc/admin.html) — password `cc2026`
+**Admin:** [admin.html](https://cscahyosugiharto.github.io/conference-with-cc/admin.html) (password `cc2026`)
+
+Visual direction lives in [DESIGN.md](DESIGN.md).
 
 ## What it does
 
-1. Interactive hall map with **exactly 200 seats** in blocks **A–L** (gold / blue). Occupied seats turn **red**.
-2. Click a seat → **Next** → **Full Name** (empty field, no placeholder) → luxury PDF ticket for **CC 2027**.
+1. Interactive hall map with **exactly 200 seats** in blocks **A-L** (gold / blue). Occupied seats turn **red**.
+2. Click a seat, continue to **Full Name** (empty field, no placeholder), then a luxury PDF ticket for **CC 2027**.
 3. Admin uses the same seating chart, plus a registration list with **Share PDF** and **Delete** on each row.
 
-Static site — no payment. Registrations use a shared store with localStorage fallback.
+Static site, no payment. Registrations use a shared store with localStorage fallback.
 
 ## Local preview
 

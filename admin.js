@@ -21,6 +21,9 @@
     seatActions: document.getElementById("admin-seat-actions"),
     seatPdf: document.getElementById("admin-seat-pdf"),
     seatDelete: document.getElementById("admin-seat-delete"),
+    dashStatus: document.getElementById("dash-status"),
+    openSeats: document.getElementById("admin-open-seats"),
+    totalSeats: document.getElementById("admin-total-seats"),
   };
 
   let cache = [];
@@ -38,7 +41,7 @@
   }
 
   function formatWhen(iso) {
-    if (!iso) return "—";
+    if (!iso) return "Not recorded";
     const date = new Date(iso);
     if (Number.isNaN(date.getTime())) return iso;
     return new Intl.DateTimeFormat("en-GB", {
@@ -81,23 +84,38 @@
     `;
   }
 
+  function emptyMessage() {
+    if (!cache.length) {
+      return "No registrations yet. Seats booked on the public chart will appear here after Refresh.";
+    }
+    return "No registrations match this search. Clear the search to see the full list.";
+  }
+
   function renderTable() {
     const rows = filteredRows();
     els.count.textContent = `${cache.length} registration${cache.length === 1 ? "" : "s"}${els.filter.value.trim() ? ` · ${rows.length} shown` : ""}`;
     if (!rows.length) {
-      els.rows.innerHTML = `<tr><td colspan="6">${cache.length ? "No matching results." : "No registrations yet."}</td></tr>`;
+      els.rows.innerHTML = `<tr class="empty-row"><td colspan="6">${emptyMessage()}</td></tr>`;
       return;
     }
     els.rows.innerHTML = rows.map((row) => `
       <tr>
         <td data-label="Full Name">${escapeHtml(row.name)}</td>
         <td data-label="Seat"><strong>${escapeHtml(row.seat)}</strong></td>
-        <td data-label="Category">${escapeHtml(row.category || "—")}</td>
+        <td data-label="Category">${escapeHtml(row.category || "Not set")}</td>
         <td data-label="Time">${escapeHtml(formatWhen(row.createdAt))}</td>
-        <td class="mono" data-label="Ticket ID">${escapeHtml(row.ticketId || "—")}</td>
+        <td class="mono" data-label="Ticket ID">${escapeHtml(row.ticketId || "Not set")}</td>
         <td data-label="Actions">${actionButtons(row)}</td>
       </tr>
     `).join("");
+  }
+
+  function updateOpenCount() {
+    const seats = [...els.blocks.querySelectorAll(".seat")];
+    const total = seats.length || 200;
+    const takenHere = seats.filter((btn) => btn.classList.contains("taken")).length;
+    if (els.totalSeats) els.totalSeats.textContent = String(total);
+    if (els.openSeats) els.openSeats.textContent = String(Math.max(0, total - takenHere));
   }
 
   function paintHall() {
@@ -112,6 +130,7 @@
         ? `${btn.dataset.code} · ${occupant.name}`
         : `${btn.dataset.code} · not yet booked`;
     });
+    updateOpenCount();
   }
 
   function showInspect(code) {
@@ -124,14 +143,14 @@
       els.seatMeta.innerHTML = [
         `<strong>${escapeHtml(occupant.name)}</strong>`,
         `${block ? block.name : ""} · ${escapeHtml(occupant.category || hall.categoryLabel(block && block.category))}`,
-        `Ticket ${escapeHtml(occupant.ticketId || "—")}`,
+        `Ticket ${escapeHtml(occupant.ticketId || "not set")}`,
         formatWhen(occupant.createdAt),
       ].filter(Boolean).join("<br>");
       els.seatActions.classList.remove("hidden");
       els.seatPdf.dataset.id = occupant.ticketId || occupant.seat;
       els.seatDelete.dataset.id = occupant.ticketId || occupant.seat;
     } else {
-      els.seatMeta.textContent = "not yet booked";
+      els.seatMeta.textContent = "Not yet booked.";
       els.seatActions.classList.add("hidden");
     }
   }
@@ -142,13 +161,39 @@
     if (inspect) showInspect(inspect);
   }
 
+  function setStatus(text) {
+    if (els.dashStatus) els.dashStatus.textContent = text;
+  }
+
   async function load() {
-    const result = await window.CCStore.listRegistrations();
-    cache = result.items;
-    render();
+    setStatus("Loading registrations.");
+    els.rows.innerHTML = `<tr class="empty-row"><td colspan="6">Loading registrations.</td></tr>`;
+    try {
+      const result = await window.CCStore.listRegistrations();
+      cache = result.items;
+      if (result.error) {
+        setStatus(`Showing the ${result.source || "local"} copy. Shared list could not be updated (${result.error}).`);
+      } else if (result.source === "shared") {
+        setStatus("Showing the shared registration list.");
+      } else if (result.source === "mixed") {
+        setStatus("Showing a mix of shared and on-device registrations.");
+      } else {
+        setStatus("Showing registrations saved on this device.");
+      }
+      render();
+    } catch (err) {
+      cache = [];
+      setStatus(`Could not load registrations. ${String(err.message || err)} Try Refresh.`);
+      els.rows.innerHTML = `<tr class="empty-row"><td colspan="6">Could not load registrations. Try Refresh.</td></tr>`;
+      els.count.textContent = "0 registrations";
+    }
   }
 
   function exportCsv() {
+    if (!cache.length) {
+      setStatus("There are no registrations to download.");
+      return;
+    }
     const header = ["Full Name", "Seat", "Category", "Time", "Ticket ID"];
     const lines = [header.join(",")].concat(cache.map((row) => [
       csv(row.name),
@@ -170,7 +215,7 @@
     const doc = await window.CCTicket.buildTicketPdf({
       name: row.name,
       seat: row.seat,
-      category: row.category || "—",
+      category: row.category || "Not set",
       id: row.ticketId || "CC-2027",
     });
     await window.CCTicket.shareTicketPdf(doc, {
@@ -203,6 +248,8 @@
     try {
       if (act === "pdf") await shareRowPdf(row);
       if (act === "del") await deleteRow(row);
+    } catch (err) {
+      setStatus(`That action failed. ${String(err.message || err)}`);
     } finally {
       if (btn) btn.disabled = false;
     }
