@@ -209,7 +209,10 @@
         showStep(1);
         return;
       }
-      state.saveNote = `Ticket preview is ready. Registration may not have reached the shared list (${message}).`;
+      const why = window.CCStore.friendlyError
+        ? window.CCStore.friendlyError(message)
+        : message;
+      state.saveNote = `Ticket preview is ready. Registration may not have reached the shared list (${why}).`;
     }
 
     addTaken([state.ticket.seat.code]);
@@ -281,7 +284,10 @@
       replaceTaken(result.items.map((item) => item.seat));
       if (!els.hallStatus) return;
       if (result.error) {
-        els.hallStatus.textContent = `Showing booked seats from this device plus any shared copy that loaded. Shared list error: ${result.error}`;
+        const why = window.CCStore.friendlyError
+          ? window.CCStore.friendlyError(result.error)
+          : result.error;
+        els.hallStatus.textContent = `Taken seats on this device are marked red. Shared list unavailable: ${why}.`;
       } else if (result.source === "local") {
         els.hallStatus.textContent = "Showing booked seats saved on this device.";
       } else {
@@ -289,7 +295,10 @@
       }
     } catch (err) {
       if (els.hallStatus) {
-        els.hallStatus.textContent = `Could not refresh taken seats. ${String(err.message || err)} Booked seats already on this device stay red.`;
+        const why = window.CCStore.friendlyError
+          ? window.CCStore.friendlyError(err.message || err)
+          : String(err.message || err);
+        els.hallStatus.textContent = `Could not refresh taken seats (${why}). Booked seats already on this device stay red.`;
       }
     }
   }

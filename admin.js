@@ -172,7 +172,10 @@
       const result = await window.CCStore.listRegistrations();
       cache = result.items;
       if (result.error) {
-        setStatus(`Showing the ${result.source || "local"} copy. Shared list could not be updated (${result.error}).`);
+        const why = window.CCStore.friendlyError
+          ? window.CCStore.friendlyError(result.error)
+          : result.error;
+        setStatus(`Showing the ${result.source || "local"} copy. Shared list unavailable: ${why}.`);
       } else if (result.source === "shared") {
         setStatus("Showing the shared registration list.");
       } else if (result.source === "mixed") {
