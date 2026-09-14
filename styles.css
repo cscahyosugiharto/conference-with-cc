@@ -340,12 +340,14 @@ body::before {
 }
 
 .seat.taken,
-.seat:disabled.taken {
+.seat:disabled.taken,
+.seat[aria-pressed="true"].taken {
   opacity: 1;
   filter: none;
   cursor: not-allowed;
   transform: none;
-  background: linear-gradient(180deg, #f87171, #dc2626);
+  background-color: #dc2626;
+  background-image: linear-gradient(180deg, #f87171, #dc2626);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25);
 }
 

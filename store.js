@@ -30,9 +30,19 @@
     localStorage.setItem(localKey, JSON.stringify(normalize(list)));
   }
 
+  async function fetchWithTimeout(url, options = {}, ms = 4000) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), ms);
+    try {
+      return await fetch(url, { ...options, signal: ctrl.signal });
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async function readRemote() {
     if (!bucket) return null;
-    const res = await fetch(`${baseUrl}/${bucket}/${remoteKey}`, {
+    const res = await fetchWithTimeout(`${baseUrl}/${bucket}/${remoteKey}`, {
       headers: { Accept: "application/json" },
     });
     if (res.status === 404) return [];
@@ -52,7 +62,7 @@
       updatedAt: new Date().toISOString(),
       items: normalize(list),
     };
-    const res = await fetch(`${baseUrl}/${bucket}/${remoteKey}`, {
+    const res = await fetchWithTimeout(`${baseUrl}/${bucket}/${remoteKey}`, {
       method: "POST",
       headers: { "Content-Type": "application/json", Accept: "application/json" },
       body: JSON.stringify(payload),
