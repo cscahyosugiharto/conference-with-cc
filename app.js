@@ -1,6 +1,9 @@
 (() => {
   const hall = window.CCHall;
-  const { blockById, categoryLabel } = hall;
+  const { categoryLabel, seatInfo } = hall;
+  const DEFAULT_SECTIONS = (window.CCStore && window.CCStore.DEFAULT_SECTIONS)
+    || hall.DEFAULT_SECTION_OPEN
+    || { gold: true, blue: false, gray: false };
 
   const els = {
     blocks: document.getElementById("blocks"),
@@ -28,15 +31,22 @@
     ticketStatus: document.getElementById("ticket-status"),
     openSeats: document.getElementById("open-seats"),
     totalSeats: document.getElementById("total-seats"),
+    legendStates: {
+      gold: document.getElementById("legend-gold-state"),
+      blue: document.getElementById("legend-blue-state"),
+      gray: document.getElementById("legend-gray-state"),
+    },
   };
 
   const TAKEN_CACHE = "cc2026-taken-cache";
+  const SECTIONS_CACHE = "cc2026-section-gates";
 
   const state = {
     selected: null,
     ticket: null,
     pdfDoc: null,
     taken: new Set(),
+    sections: { ...DEFAULT_SECTIONS },
     saveNote: "",
   };
 
@@ -57,22 +67,58 @@
     }
   }
 
+  function loadSectionsCache() {
+    try {
+      const raw = JSON.parse(localStorage.getItem(SECTIONS_CACHE) || "null");
+      if (raw && typeof raw === "object") {
+        state.sections = { ...DEFAULT_SECTIONS, ...raw };
+      }
+    } catch {
+      /* ignore bad cache */
+    }
+  }
+
+  function sectionOpen(section) {
+    return state.sections[section] !== false;
+  }
+
+  function updateLegend() {
+    Object.entries(els.legendStates).forEach(([id, node]) => {
+      if (!node) return;
+      const open = sectionOpen(id);
+      node.textContent = open ? "Open" : "Closed";
+      node.classList.toggle("is-closed", !open);
+    });
+  }
+
   function updateOpenCount() {
     const seats = [...els.blocks.querySelectorAll(".seat")];
-    const total = seats.length || 200;
-    const takenHere = seats.filter((btn) => state.taken.has(btn.dataset.code)).length;
+    const total = seats.length || hall.TOTAL_SEATS || 300;
+    const openHere = seats.filter((btn) => (
+      !state.taken.has(btn.dataset.code) && sectionOpen(btn.dataset.category)
+    )).length;
     if (els.totalSeats) els.totalSeats.textContent = String(total);
-    if (els.openSeats) els.openSeats.textContent = String(Math.max(0, total - takenHere));
+    if (els.openSeats) els.openSeats.textContent = String(Math.max(0, openHere));
   }
 
   function paintSeats() {
     els.blocks.querySelectorAll(".seat").forEach((btn) => {
       const taken = state.taken.has(btn.dataset.code);
+      const blocked = !sectionOpen(btn.dataset.category);
       btn.classList.toggle("taken", taken);
-      btn.disabled = taken;
+      btn.classList.toggle("blocked", blocked && !taken);
+      btn.disabled = taken || blocked;
       if (taken) {
         btn.setAttribute("aria-disabled", "true");
         btn.title = `${btn.dataset.code} · taken`;
+        if (btn.getAttribute("aria-pressed") === "true") {
+          btn.setAttribute("aria-pressed", "false");
+          state.selected = null;
+          updateSelection();
+        }
+      } else if (blocked) {
+        btn.setAttribute("aria-disabled", "true");
+        btn.title = `${btn.dataset.code} · closed for registration`;
         if (btn.getAttribute("aria-pressed") === "true") {
           btn.setAttribute("aria-pressed", "false");
           state.selected = null;
@@ -83,6 +129,7 @@
         btn.title = btn.dataset.code;
       }
     });
+    updateLegend();
     updateOpenCount();
   }
 
@@ -98,6 +145,12 @@
     paintSeats();
   }
 
+  function applySections(sections) {
+    if (!sections || typeof sections !== "object") return;
+    state.sections = { ...DEFAULT_SECTIONS, ...sections };
+    paintSeats();
+  }
+
   function selectSeat(code) {
     const target = els.blocks.querySelector(`[data-code="${code}"]`);
     if (!target || target.disabled) return;
@@ -109,12 +162,13 @@
       if (prev) prev.setAttribute("aria-pressed", "false");
       const next = els.blocks.querySelector(`[data-code="${code}"]`);
       next.setAttribute("aria-pressed", "true");
-      const block = blockById[next.dataset.block];
+      const info = seatInfo(code);
       state.selected = {
         code,
-        block: block.id,
-        name: block.name,
-        category: block.category,
+        row: info.row,
+        num: info.num,
+        name: info.name,
+        category: info.category,
       };
     }
     updateSelection();
@@ -188,6 +242,7 @@
         ticketId: state.ticket.id,
         createdAt: new Date().toISOString(),
       });
+      if (save && save.sections) applySections(save.sections);
       if (save && save.source === "local") {
         state.saveNote = "Ticket is ready. It is saved on this device. The shared list could not be updated.";
       } else if (save && save.source === "shared") {
@@ -195,11 +250,13 @@
       }
     } catch (err) {
       const message = String(err.message || err);
-      if (/just taken|already registered/i.test(message)) {
+      if (/just taken|already registered|not open for booking/i.test(message)) {
         els.formError.textContent = `${message} Pick another seat.`;
         if (window.CCStore) {
           try {
-            replaceTaken(await window.CCStore.takenSeats());
+            const result = await window.CCStore.listRegistrations();
+            if (result.sections) applySections(result.sections);
+            replaceTaken(result.items.map((item) => item.seat));
           } catch {
             addTaken([state.ticket.seat.code]);
           }
@@ -217,7 +274,10 @@
 
     addTaken([state.ticket.seat.code]);
     if (window.CCStore) {
-      window.CCStore.takenSeats().then(replaceTaken).catch(() => {});
+      window.CCStore.listRegistrations().then((result) => {
+        if (result.sections) applySections(result.sections);
+        replaceTaken(result.items.map((item) => item.seat));
+      }).catch(() => {});
     }
 
     try {
@@ -274,6 +334,7 @@
   async function refreshTaken(initial) {
     if (!window.CCStore) {
       if (els.hallStatus) els.hallStatus.textContent = "Seat list is stored on this device only.";
+      paintSeats();
       return;
     }
     if (initial && els.hallStatus) {
@@ -281,6 +342,7 @@
     }
     try {
       const result = await window.CCStore.listRegistrations();
+      if (result.sections) applySections(result.sections);
       replaceTaken(result.items.map((item) => item.seat));
       if (!els.hallStatus) return;
       if (result.error) {
@@ -291,9 +353,10 @@
       } else if (result.source === "local") {
         els.hallStatus.textContent = "Showing booked seats saved on this device.";
       } else {
-        els.hallStatus.textContent = "Taken seats are marked red.";
+        els.hallStatus.textContent = "Taken seats are marked red. Closed sections cannot be booked.";
       }
     } catch (err) {
+      paintSeats();
       if (els.hallStatus) {
         const why = window.CCStore.friendlyError
           ? window.CCStore.friendlyError(err.message || err)
@@ -347,7 +410,13 @@
     showStep(1);
   });
 
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "visible") refreshTaken(false);
+  });
+  window.setInterval(() => refreshTaken(false), 20000);
+
   loadTakenCache();
+  loadSectionsCache();
   hall.renderHall(els.blocks);
   paintSeats();
   refreshTaken(true);

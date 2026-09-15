@@ -17,7 +17,7 @@ Do not invent a venue, street address, dates, speaker list, attendee counts, or 
 
 A printed-ticket ceremony for a medical society, not a SaaS landing page.
 
-The live product is a 200-seat hall map, a full-name form, and a luxury PDF printed onto the ticket blank. Chrome should feel like the ticket: navy field, metallic gold type, cream fill-in bands, Indonesian flag and batik language as a quiet motif. It should not feel like a dashboard, a startup waitlist, or a neon “AI event app”.
+The live product is a 300-seat Plenary Hall map, a full-name form, and a luxury PDF printed onto the ticket blank. Chrome should feel like the ticket: navy field, metallic gold type, cream fill-in bands, Indonesian flag and batik language as a quiet motif. It should not feel like a dashboard, a startup waitlist, or a neon “AI event app”.
 
 ## Palette
 
@@ -35,8 +35,10 @@ Hall map semantics (not chrome colors):
 
 - Gold seats: `#d4a017`
 - Blue seats: `#1f5aa6`
+- Gray seats: `#8b9098`
 - Selected seat: green (`#10b981`) so it cannot be confused with Gold
 - Seat taken: red (`#dc2626`)
+- Closed section: faded / hatched, not bookable
 
 No blue-purple AI gradients, no neon, no page-wide glow orbs, no page-wide glassmorphism.
 
@@ -61,11 +63,14 @@ Quiet batik / perforation language: a gold hairline, a ticket-stub tear, a faint
 
 ## Product that must keep working
 
-- 200 seats in blocks A–L
+- 300 seats in rows A–O, numbered 1–20, with aisles after 6 and 14
+- Gold A–G (140), Blue H–J (60), Gray K–O (100)
+- Default public booking: Gold open; Blue and Gray closed until admin enables them
+- Admin: three independent section toggles, persisted in the shared store
 - Select seat → Full Name → luxury PDF from `assets/ticket-blank-v2.jpg`
 - Occupied seats red
-- Legend: Gold / Blue / Selected Seat / Seat Taken
-- Centered entrance
+- Legend: Gold / Blue / Gray / Selected Seat / Seat Taken / Closed for registration
+- Centered main entrance
 - Wide MAIN SCREEN above row A
 - Taller title box on the stage
 - Admin: same chart, registration list, Share PDF, Delete

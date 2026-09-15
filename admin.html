@@ -72,17 +72,17 @@
               <div id="admin-blocks" class="blocks" role="group" aria-label="ICOS 2027 admin seating chart"></div>
               <div class="hall-footer">
                 <div class="total-seats">
-                  <span id="admin-total-seats">200</span>
+                  <span id="admin-total-seats">300</span>
                   <small>TOTAL SEATS</small>
                 </div>
                 <div class="entrance">
                   <div class="door">
                     <div class="arrow"></div>
-                    <span>ENTRANCE</span>
+                    <span>MAIN ENTRANCE</span>
                   </div>
                 </div>
                 <div class="total-seats total-seats-end">
-                  <span id="admin-open-seats">200</span>
+                  <span id="admin-open-seats">300</span>
                   <small>OPEN SEATS</small>
                 </div>
               </div>
@@ -90,12 +90,40 @@
           </div>
           <aside class="side">
             <div class="card">
+              <h2>Registration sections</h2>
+              <p class="hint section-gate-hint">Closed sections cannot be booked on the public chart, even if empty.</p>
+              <label class="section-toggle">
+                <input id="toggle-gold" type="checkbox" data-section-toggle="gold" checked>
+                <span>
+                  <strong>Gold</strong>
+                  Front · rows A–G · 140 seats
+                </span>
+              </label>
+              <label class="section-toggle">
+                <input id="toggle-blue" type="checkbox" data-section-toggle="blue">
+                <span>
+                  <strong>Blue</strong>
+                  Middle · rows H–J · 60 seats
+                </span>
+              </label>
+              <label class="section-toggle">
+                <input id="toggle-gray" type="checkbox" data-section-toggle="gray">
+                <span>
+                  <strong>Gray</strong>
+                  Back · rows K–O · 100 seats
+                </span>
+              </label>
+              <p class="status" id="section-gate-status" role="status"></p>
+            </div>
+            <div class="card">
               <h2>Seat categories</h2>
               <div class="legend-simple">
-                <div class="legend-item"><span class="swatch gold"></span><span>Gold</span></div>
-                <div class="legend-item"><span class="swatch navy"></span><span>Blue</span></div>
+                <div class="legend-item"><span class="swatch gold"></span><span>Gold · Front A–G · 140</span></div>
+                <div class="legend-item"><span class="swatch navy"></span><span>Blue · Middle H–J · 60</span></div>
+                <div class="legend-item"><span class="swatch gray"></span><span>Gray · Back K–O · 100</span></div>
                 <div class="legend-item"><span class="swatch pick"></span><span>Selected Seat</span></div>
                 <div class="legend-item"><span class="swatch taken"></span><span>Seat Taken</span></div>
+                <div class="legend-item"><span class="swatch blocked"></span><span>Closed for registration</span></div>
               </div>
             </div>
             <div class="card selected-box">
