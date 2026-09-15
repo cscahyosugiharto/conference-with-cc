@@ -2,6 +2,9 @@
   const PASS = (window.CC_CONFIG && window.CC_CONFIG.adminPassword) || "cc2026";
   const AUTH_KEY = "cc-admin-ok";
   const hall = window.CCHall;
+  const DEFAULT_SECTIONS = (window.CCStore && window.CCStore.DEFAULT_SECTIONS)
+    || hall.DEFAULT_SECTION_OPEN
+    || { gold: true, blue: false, gray: false };
 
   const els = {
     gate: document.getElementById("gate"),
@@ -24,10 +27,13 @@
     dashStatus: document.getElementById("dash-status"),
     openSeats: document.getElementById("admin-open-seats"),
     totalSeats: document.getElementById("admin-total-seats"),
+    sectionToggles: document.querySelectorAll("[data-section-toggle]"),
+    sectionStatus: document.getElementById("section-gate-status"),
   };
 
   let cache = [];
   let inspect = null;
+  let sections = { ...DEFAULT_SECTIONS };
 
   function unlocked() {
     return sessionStorage.getItem(AUTH_KEY) === "1";
@@ -112,10 +118,17 @@
 
   function updateOpenCount() {
     const seats = [...els.blocks.querySelectorAll(".seat")];
-    const total = seats.length || 200;
+    const total = seats.length || hall.TOTAL_SEATS || 300;
     const takenHere = seats.filter((btn) => btn.classList.contains("taken")).length;
     if (els.totalSeats) els.totalSeats.textContent = String(total);
     if (els.openSeats) els.openSeats.textContent = String(Math.max(0, total - takenHere));
+  }
+
+  function paintSectionToggles() {
+    els.sectionToggles.forEach((input) => {
+      const id = input.dataset.sectionToggle;
+      input.checked = sections[id] !== false;
+    });
   }
 
   function paintHall() {
@@ -123,26 +136,33 @@
     els.blocks.querySelectorAll(".seat").forEach((btn) => {
       const occupant = bySeat(btn.dataset.code);
       const isTaken = taken.has(btn.dataset.code);
+      const closed = sections[btn.dataset.category] === false;
       btn.classList.toggle("taken", isTaken);
+      btn.classList.toggle("blocked", closed && !isTaken);
       btn.disabled = false;
       btn.setAttribute("aria-pressed", inspect === btn.dataset.code ? "true" : "false");
-      btn.title = occupant
-        ? `${btn.dataset.code} · ${occupant.name}`
-        : `${btn.dataset.code} · not yet booked`;
+      if (occupant) {
+        btn.title = `${btn.dataset.code} · ${occupant.name}`;
+      } else if (closed) {
+        btn.title = `${btn.dataset.code} · closed for public booking`;
+      } else {
+        btn.title = `${btn.dataset.code} · not yet booked`;
+      }
     });
+    paintSectionToggles();
     updateOpenCount();
   }
 
   function showInspect(code) {
     inspect = code;
     paintHall();
-    const block = hall.blockById[code.split("-")[0]];
+    const info = hall.seatInfo(code);
     const occupant = bySeat(code);
     els.seatCode.textContent = code;
     if (occupant) {
       els.seatMeta.innerHTML = [
         `<strong>${escapeHtml(occupant.name)}</strong>`,
-        `${block ? block.name : ""} · ${escapeHtml(occupant.category || hall.categoryLabel(block && block.category))}`,
+        `${info ? info.name : ""} · ${escapeHtml(occupant.category || (info && hall.categoryLabel(info.category)))}`,
         `Ticket ${escapeHtml(occupant.ticketId || "not set")}`,
         formatWhen(occupant.createdAt),
       ].filter(Boolean).join("<br>");
@@ -150,7 +170,10 @@
       els.seatPdf.dataset.id = occupant.ticketId || occupant.seat;
       els.seatDelete.dataset.id = occupant.ticketId || occupant.seat;
     } else {
-      els.seatMeta.textContent = "Not yet booked.";
+      const closed = info && sections[info.category] === false;
+      els.seatMeta.textContent = closed
+        ? "Not yet booked. This section is closed for public registration."
+        : "Not yet booked.";
       els.seatActions.classList.add("hidden");
     }
   }
@@ -165,12 +188,17 @@
     if (els.dashStatus) els.dashStatus.textContent = text;
   }
 
+  function setGateStatus(text) {
+    if (els.sectionStatus) els.sectionStatus.textContent = text;
+  }
+
   async function load() {
     setStatus("Loading registrations.");
     els.rows.innerHTML = `<tr class="empty-row"><td colspan="6">Loading registrations.</td></tr>`;
     try {
       const result = await window.CCStore.listRegistrations();
       cache = result.items;
+      if (result.sections) sections = { ...DEFAULT_SECTIONS, ...result.sections };
       if (result.error) {
         const why = window.CCStore.friendlyError
           ? window.CCStore.friendlyError(result.error)
@@ -189,6 +217,7 @@
       setStatus(`Could not load registrations. ${String(err.message || err)} Try Refresh.`);
       els.rows.innerHTML = `<tr class="empty-row"><td colspan="6">Could not load registrations. Try Refresh.</td></tr>`;
       els.count.textContent = "0 registrations";
+      paintHall();
     }
   }
 
@@ -258,6 +287,32 @@
     }
   }
 
+  async function toggleSection(section, open, input) {
+    const previous = sections[section];
+    sections = { ...sections, [section]: open };
+    paintHall();
+    if (inspect) showInspect(inspect);
+    setGateStatus(`Saving ${hall.categoryLabel(section)} registration ${open ? "open" : "closed"}.`);
+    try {
+      const result = await window.CCStore.setSectionOpen(section, open);
+      if (result.sections) sections = { ...DEFAULT_SECTIONS, ...result.sections };
+      paintHall();
+      if (result.source === "shared") {
+        setGateStatus(`${hall.categoryLabel(section)} is ${open ? "open" : "closed"} for public booking.`);
+      } else {
+        const why = result.error && window.CCStore.friendlyError
+          ? window.CCStore.friendlyError(result.error)
+          : "saved on this device only";
+        setGateStatus(`${hall.categoryLabel(section)} is ${open ? "open" : "closed"} on this device (${why}).`);
+      }
+    } catch (err) {
+      sections = { ...sections, [section]: previous };
+      if (input) input.checked = previous !== false;
+      paintHall();
+      setGateStatus(`Could not update ${hall.categoryLabel(section)}. ${String(err.message || err)}`);
+    }
+  }
+
   els.form.addEventListener("submit", (event) => {
     event.preventDefault();
     if (els.pass.value !== PASS) {
@@ -267,7 +322,7 @@
     sessionStorage.setItem(AUTH_KEY, "1");
     els.error.textContent = "";
     showDash(true);
-    hall.renderHall(els.blocks);
+    hall.renderHall(els.blocks, { selectable: false });
     load();
   });
 
@@ -281,6 +336,12 @@
     const seat = event.target.closest(".seat");
     if (!seat) return;
     showInspect(seat.dataset.code);
+  });
+
+  els.sectionToggles.forEach((input) => {
+    input.addEventListener("change", () => {
+      toggleSection(input.dataset.sectionToggle, input.checked, input);
+    });
   });
 
   els.seatPdf.addEventListener("click", () => handleAction("pdf", els.seatPdf.dataset.id, els.seatPdf));
@@ -298,7 +359,7 @@
 
   if (unlocked()) {
     showDash(true);
-    hall.renderHall(els.blocks);
+    hall.renderHall(els.blocks, { selectable: false });
     load();
   }
 })();
