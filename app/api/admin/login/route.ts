@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { ADMIN_COOKIE, adminCookieOptions, adminCookieValue, adminPassword } from "@/lib/server/auth";
+import { ADMIN_COOKIE, adminCookieOptions, adminCookieValue, adminPassword, requestIsHttps } from "@/lib/server/auth";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +18,6 @@ export async function POST(request: Request) {
   }
 
   const response = NextResponse.json({ ok: true });
-  response.cookies.set(ADMIN_COOKIE, adminCookieValue(), adminCookieOptions());
+  response.cookies.set(ADMIN_COOKIE, adminCookieValue(), adminCookieOptions(requestIsHttps(request)));
   return response;
 }

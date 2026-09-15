@@ -24,12 +24,22 @@ export async function isAdminRequest(): Promise<boolean> {
   return cookieMatches(jar.get(ADMIN_COOKIE)?.value);
 }
 
-export function adminCookieOptions() {
+export function adminCookieOptions(secure: boolean) {
   return {
     httpOnly: true,
     sameSite: "lax" as const,
     path: "/",
     maxAge: 60 * 60 * 12,
-    secure: process.env.NODE_ENV === "production",
+    secure,
   };
+}
+
+export function requestIsHttps(request: Request): boolean {
+  const proto = request.headers.get("x-forwarded-proto");
+  if (proto) return proto.split(",")[0].trim() === "https";
+  try {
+    return new URL(request.url).protocol === "https:";
+  } catch {
+    return process.env.NODE_ENV === "production";
+  }
 }
