@@ -140,11 +140,6 @@
           const aisle = document.createElement("div");
           aisle.className = "hall-aisle";
           aisle.setAttribute("aria-hidden", "true");
-          if (row === "G" || row === "J" || row === "A") {
-            const plant = document.createElement("span");
-            plant.className = "aisle-plant";
-            aisle.appendChild(plant);
-          }
           rowEl.appendChild(aisle);
         }
         const grid = document.createElement("div");
@@ -162,7 +157,6 @@
         const gap = document.createElement("div");
         gap.className = "hall-cross-aisle";
         gap.setAttribute("aria-hidden", "true");
-        gap.innerHTML = '<span class="aisle-plant"></span><span class="aisle-plant"></span>';
         body.appendChild(gap);
       }
     });

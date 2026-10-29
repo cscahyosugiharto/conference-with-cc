@@ -44,6 +44,15 @@
     return { saved: true, source: "shared", sections: data.sections, ticketId: data.ticketId };
   }
 
+  async function bookSeats(payload) {
+    return call("bookings", { method: "POST", body: JSON.stringify(payload) });
+  }
+
+  async function lookupTickets(email) {
+    const data = await call("lookup", { method: "POST", body: JSON.stringify({ email }) });
+    return data.tickets || [];
+  }
+
   async function deleteRegistration({ ticketId, seat }) {
     const q = ticketId ? `ticketId=${encodeURIComponent(ticketId)}` : `seat=${encodeURIComponent(seat)}`;
     await call(`bookings?${q}`, { method: "DELETE" });
@@ -68,7 +77,7 @@
   }
 
   window.CCStore = {
-    listRegistrations, addRegistration, deleteRegistration, setSectionOpen,
+    listRegistrations, addRegistration, bookSeats, lookupTickets, deleteRegistration, setSectionOpen,
     login, logout, session, friendlyError, DEFAULT_SECTIONS,
     takenSeats: async () => new Set((await listRegistrations()).items.map((i) => i.seat)),
   };

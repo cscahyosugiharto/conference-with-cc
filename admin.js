@@ -75,7 +75,7 @@
     const q = (els.filter.value || "").trim().toLowerCase();
     return cache.filter((row) => {
       if (!q) return true;
-      return [row.name, row.seat, row.ticketId, row.category].join(" ").toLowerCase().includes(q);
+      return [row.name, row.email, row.seat, row.ticketId, row.category].join(" ").toLowerCase().includes(q);
     });
   }
 
@@ -105,7 +105,7 @@
     }
     els.rows.innerHTML = rows.map((row) => `
       <tr>
-        <td data-label="Full Name">${escapeHtml(row.name)}</td>
+        <td data-label="Full Name">${escapeHtml(row.name)}${row.email ? `<br><small>${escapeHtml(row.email)}</small>` : ""}</td>
         <td data-label="Seat"><strong>${escapeHtml(row.seat)}</strong></td>
         <td data-label="Category">${escapeHtml(row.category || "Not set")}</td>
         <td data-label="Time">${escapeHtml(formatWhen(row.createdAt))}</td>
@@ -225,9 +225,10 @@
       setStatus("There are no registrations to download.");
       return;
     }
-    const header = ["Full Name", "Seat", "Category", "Time", "Ticket ID"];
+    const header = ["Full Name", "Email", "Seat", "Category", "Time", "Ticket ID"];
     const lines = [header.join(",")].concat(cache.map((row) => [
       csv(row.name),
+      csv(row.email),
       csv(row.seat),
       csv(row.category),
       csv(row.createdAt),

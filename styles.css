@@ -833,6 +833,7 @@ label {
 }
 
 input[type="text"],
+input[type="email"],
 input[type="password"],
 input[type="search"] {
   width: 100%;
@@ -849,6 +850,7 @@ input[type="search"] {
 }
 
 input[type="text"]:focus,
+input[type="email"]:focus,
 input[type="password"]:focus,
 input[type="search"]:focus {
   outline: var(--focus-gold);
@@ -1357,4 +1359,26 @@ input[type="search"]:focus {
   .btn:not(:disabled):hover {
     transform: none;
   }
+}
+
+/* Oct 2026: header buttons, ticket quantity, multi-seat, lookup */
+.masthead-inner { align-items: center; }
+.btn.btn-head { width: auto; min-height: 40px; padding: 8px 16px; font-size: 0.9rem; background: var(--gold); color: var(--navy); border: 1px solid var(--gold); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+.btn.btn-head-ghost { background: transparent; color: var(--parchment); border-color: rgba(244, 236, 216, 0.55); }
+#doctor-form label { margin-top: 14px; }
+.qty-picker { display: flex; align-items: center; justify-content: center; gap: 18px; margin: 18px 0 8px; }
+.btn.qty-btn { width: 56px; min-height: 56px; padding: 0; font-size: 1.6rem; }
+.qty-value { min-width: 64px; text-align: center; font-family: var(--font-sans); font-size: 3rem; font-weight: 700; color: var(--navy); }
+.sel-count { float: right; font-family: var(--font-sans, inherit); font-size: 0.85rem; color: var(--muted); font-weight: 600; }
+.seat-code { overflow-wrap: anywhere; }
+.attendee-fields { margin-top: 6px; }
+.attendee-fields h3 { margin: 18px 0 0; font-size: 1rem; color: var(--navy); }
+.ticket-list { display: grid; gap: 22px; margin-top: 16px; }
+.ticket-item .actions { max-width: 420px; margin: 10px auto 0; }
+.hall-aisle .aisle-plant, .hall-cross-aisle .aisle-plant { display: none; }
+@media (max-width: 640px) {
+  .masthead-inner { flex-direction: column; align-items: flex-start; }
+  .masthead-actions { justify-content: flex-start; }
+  .steps { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+  .step { font-size: 0.72rem !important; }
 }
