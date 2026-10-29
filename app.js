@@ -1,423 +1,295 @@
 (() => {
   const hall = window.CCHall;
   const { categoryLabel, seatInfo } = hall;
-  const DEFAULT_SECTIONS = (window.CCStore && window.CCStore.DEFAULT_SECTIONS)
-    || hall.DEFAULT_SECTION_OPEN
-    || { gold: true, blue: false, gray: false };
+  const DEFAULT_SECTIONS = (window.CCStore && window.CCStore.DEFAULT_SECTIONS) || { gold: true, blue: false, gray: false };
+  const MAX_TICKETS = 10;
+  const $ = (id) => document.getElementById(id);
 
   const els = {
-    blocks: document.getElementById("blocks"),
-    selectedCode: document.getElementById("selected-code"),
-    selectedMeta: document.getElementById("selected-meta"),
-    nextBtn: document.getElementById("next-btn"),
-    stepSeat: document.getElementById("step-seat"),
-    stepForm: document.getElementById("step-form"),
-    stepTicket: document.getElementById("step-ticket"),
-    form: document.getElementById("doctor-form"),
-    doctorName: document.getElementById("doctor-name"),
-    formError: document.getElementById("form-error"),
-    formStatus: document.getElementById("form-status"),
-    createBtn: document.getElementById("create-ticket-btn"),
-    backToSeats: document.getElementById("back-to-seats"),
-    tName: document.getElementById("t-name"),
-    tSeat: document.getElementById("t-seat"),
-    tCat: document.getElementById("t-cat"),
-    tId: document.getElementById("t-id"),
-    downloadBtn: document.getElementById("download-btn"),
-    shareBtn: document.getElementById("share-btn"),
-    newBooking: document.getElementById("new-booking"),
+    blocks: $("blocks"),
+    selectedCode: $("selected-code"),
+    selectedMeta: $("selected-meta"),
+    selCount: $("sel-count"),
+    nextBtn: $("next-btn"),
+    steps: { 1: $("step-qty"), 2: $("step-seat"), 3: $("step-form"), 4: $("step-ticket"), lookup: $("step-lookup") },
+    stepper: document.querySelector(".steps"),
+    qtyValue: $("qty-value"),
+    form: $("doctor-form"),
+    buyerName: $("buyer-name"),
+    buyerEmail: $("buyer-email"),
+    attendees: $("attendee-fields"),
+    formError: $("form-error"),
+    formStatus: $("form-status"),
+    createBtn: $("create-ticket-btn"),
+    ticketList: $("ticket-list"),
+    ticketStatus: $("ticket-status"),
+    lookupForm: $("lookup-form"),
+    lookupEmail: $("lookup-email"),
+    lookupError: $("lookup-error"),
+    lookupBtn: $("lookup-btn"),
+    lookupList: $("lookup-list"),
     pills: document.querySelectorAll("[data-step-pill]"),
-    hallStatus: document.getElementById("hall-status"),
-    ticketStatus: document.getElementById("ticket-status"),
-    openSeats: document.getElementById("open-seats"),
-    totalSeats: document.getElementById("total-seats"),
-    legendStates: {
-      gold: document.getElementById("legend-gold-state"),
-      blue: document.getElementById("legend-blue-state"),
-      gray: document.getElementById("legend-gray-state"),
-    },
+    hallStatus: $("hall-status"),
+    openSeats: $("open-seats"),
+    totalSeats: $("total-seats"),
+    legendStates: { gold: $("legend-gold-state"), blue: $("legend-blue-state"), gray: $("legend-gray-state") },
   };
 
-  const TAKEN_CACHE = "cc2026-taken-cache";
-  const SECTIONS_CACHE = "cc2026-section-gates";
+  const state = { qty: 1, selected: [], taken: new Set(), sections: { ...DEFAULT_SECTIONS }, step: 1 };
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
-  const state = {
-    selected: null,
-    ticket: null,
-    pdfDoc: null,
-    taken: new Set(),
-    sections: { ...DEFAULT_SECTIONS },
-    saveNote: "",
-  };
-
-  function persistTakenCache() {
-    try {
-      localStorage.setItem(TAKEN_CACHE, JSON.stringify([...state.taken]));
-    } catch {
-      /* ignore quota / private mode */
-    }
-  }
-
-  function loadTakenCache() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(TAKEN_CACHE) || "[]");
-      if (Array.isArray(raw)) raw.forEach((id) => state.taken.add(id));
-    } catch {
-      /* ignore bad cache */
-    }
-  }
-
-  function loadSectionsCache() {
-    try {
-      const raw = JSON.parse(localStorage.getItem(SECTIONS_CACHE) || "null");
-      if (raw && typeof raw === "object") {
-        state.sections = { ...DEFAULT_SECTIONS, ...raw };
-      }
-    } catch {
-      /* ignore bad cache */
-    }
-  }
-
-  function sectionOpen(section) {
-    return state.sections[section] !== false;
-  }
+  const sectionOpen = (s) => state.sections[s] !== false;
 
   function updateLegend() {
     Object.entries(els.legendStates).forEach(([id, node]) => {
       if (!node) return;
-      const open = sectionOpen(id);
-      node.textContent = open ? "Open" : "Closed";
-      node.classList.toggle("is-closed", !open);
+      node.textContent = sectionOpen(id) ? "Open" : "Closed";
+      node.classList.toggle("is-closed", !sectionOpen(id));
     });
   }
 
-  function updateOpenCount() {
-    const seats = [...els.blocks.querySelectorAll(".seat")];
-    const total = seats.length || hall.TOTAL_SEATS || 300;
-    const openHere = seats.filter((btn) => (
-      !state.taken.has(btn.dataset.code) && sectionOpen(btn.dataset.category)
-    )).length;
-    if (els.totalSeats) els.totalSeats.textContent = String(total);
-    if (els.openSeats) els.openSeats.textContent = String(Math.max(0, openHere));
-  }
-
   function paintSeats() {
-    els.blocks.querySelectorAll(".seat").forEach((btn) => {
-      const taken = state.taken.has(btn.dataset.code);
+    const seats = [...els.blocks.querySelectorAll(".seat")];
+    seats.forEach((btn) => {
+      const code = btn.dataset.code;
+      const taken = state.taken.has(code);
       const blocked = !sectionOpen(btn.dataset.category);
       btn.classList.toggle("taken", taken);
       btn.classList.toggle("blocked", blocked && !taken);
       btn.disabled = taken || blocked;
-      if (taken) {
+      if (taken || blocked) {
         btn.setAttribute("aria-disabled", "true");
-        btn.title = `${btn.dataset.code} · taken`;
-        if (btn.getAttribute("aria-pressed") === "true") {
-          btn.setAttribute("aria-pressed", "false");
-          state.selected = null;
-          updateSelection();
-        }
-      } else if (blocked) {
-        btn.setAttribute("aria-disabled", "true");
-        btn.title = `${btn.dataset.code} · closed for registration`;
-        if (btn.getAttribute("aria-pressed") === "true") {
-          btn.setAttribute("aria-pressed", "false");
-          state.selected = null;
-          updateSelection();
-        }
+        btn.title = `${code} · ${taken ? "taken" : "closed for registration"}`;
+        if (state.selected.includes(code)) state.selected = state.selected.filter((c) => c !== code);
       } else {
         btn.removeAttribute("aria-disabled");
-        btn.title = btn.dataset.code;
+        btn.title = code;
       }
+      btn.setAttribute("aria-pressed", state.selected.includes(code) ? "true" : "false");
     });
     updateLegend();
-    updateOpenCount();
-  }
-
-  function addTaken(seats) {
-    seats.forEach((code) => state.taken.add(code));
-    persistTakenCache();
-    paintSeats();
-  }
-
-  function replaceTaken(seats) {
-    state.taken = new Set(seats);
-    persistTakenCache();
-    paintSeats();
-  }
-
-  function applySections(sections) {
-    if (!sections || typeof sections !== "object") return;
-    state.sections = { ...DEFAULT_SECTIONS, ...sections };
-    paintSeats();
-  }
-
-  function selectSeat(code) {
-    const target = els.blocks.querySelector(`[data-code="${code}"]`);
-    if (!target || target.disabled) return;
-    const prev = els.blocks.querySelector('.seat[aria-pressed="true"]');
-    if (prev && prev.dataset.code === code) {
-      prev.setAttribute("aria-pressed", "false");
-      state.selected = null;
-    } else {
-      if (prev) prev.setAttribute("aria-pressed", "false");
-      const next = els.blocks.querySelector(`[data-code="${code}"]`);
-      next.setAttribute("aria-pressed", "true");
-      const info = seatInfo(code);
-      state.selected = {
-        code,
-        row: info.row,
-        num: info.num,
-        name: info.name,
-        category: info.category,
-      };
-    }
+    if (els.totalSeats) els.totalSeats.textContent = String(seats.length);
+    if (els.openSeats) els.openSeats.textContent = String(seats.filter((b) => !b.disabled).length);
     updateSelection();
   }
 
   function updateSelection() {
-    if (!state.selected) {
-      els.selectedCode.textContent = "None";
-      els.selectedMeta.textContent = "Click a seat on the chart.";
-      els.nextBtn.disabled = true;
+    const n = state.selected.length;
+    els.selCount.textContent = `${n} of ${state.qty} selected`;
+    els.selectedCode.textContent = n ? state.selected.join(", ") : "None";
+    els.selectedMeta.textContent = n < state.qty
+      ? `Tap ${state.qty - n} more seat${state.qty - n === 1 ? "" : "s"}. Tap a selected seat to deselect.`
+      : "All seats chosen. Tap a selected seat to change it.";
+    els.nextBtn.disabled = n !== state.qty;
+  }
+
+  function toggleSeat(code) {
+    const btn = els.blocks.querySelector(`[data-code="${code}"]`);
+    if (!btn || btn.disabled) return;
+    if (state.selected.includes(code)) {
+      state.selected = state.selected.filter((c) => c !== code);
+    } else if (state.qty === 1) {
+      state.selected = [code];
+    } else if (state.selected.length < state.qty) {
+      state.selected.push(code);
+    } else {
+      els.selectedMeta.textContent = `You already picked ${state.qty} seat${state.qty === 1 ? "" : "s"}. Deselect one first.`;
       return;
     }
-    els.selectedCode.textContent = state.selected.code;
-    els.selectedMeta.textContent = `${state.selected.name} · ${categoryLabel(state.selected.category)}`;
-    els.nextBtn.disabled = false;
+    paintSeats();
   }
 
   function showStep(step) {
-    els.stepSeat.classList.toggle("hidden", step !== 1);
-    els.stepForm.classList.toggle("hidden", step !== 2);
-    els.stepTicket.classList.toggle("hidden", step !== 3);
+    state.step = step;
+    Object.entries(els.steps).forEach(([k, node]) => node.classList.toggle("hidden", String(k) !== String(step)));
+    els.stepper.classList.toggle("hidden", step === "lookup");
     els.pills.forEach((pill) => {
-      const n = Number(pill.dataset.stepPill);
-      if (n === step) pill.setAttribute("aria-current", "step");
+      if (Number(pill.dataset.stepPill) === step) pill.setAttribute("aria-current", "step");
       else pill.removeAttribute("aria-current");
     });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  function makeTicketId() {
-    const rand = Math.random().toString(36).toUpperCase().slice(2, 6);
-    const time = Date.now().toString(36).toUpperCase().slice(-4);
-    return `CC-2027-${rand}${time}`;
+  function setQty(n) {
+    state.qty = Math.max(1, Math.min(MAX_TICKETS, n));
+    els.qtyValue.textContent = String(state.qty);
+    $("qty-minus").disabled = state.qty <= 1;
+    $("qty-plus").disabled = state.qty >= MAX_TICKETS;
+    if (state.selected.length > state.qty) state.selected = state.selected.slice(0, state.qty);
+    updateSelection();
   }
 
-  async function buildPdf() {
-    state.pdfDoc = await window.CCTicket.buildTicketPdf({
-      name: state.ticket.name,
-      seat: state.ticket.seat.code,
-      category: categoryLabel(state.ticket.seat.category),
-      id: state.ticket.id,
+  function renderAttendeeFields() {
+    const prev = {};
+    els.attendees.querySelectorAll("input").forEach((i) => { prev[i.dataset.seat] = i.value; });
+    els.attendees.innerHTML = "";
+    if (state.qty < 2) return;
+    const h = document.createElement("h3");
+    h.textContent = "Name on each ticket";
+    els.attendees.appendChild(h);
+    state.selected.forEach((code, i) => {
+      const id = `att-${code}`;
+      const label = document.createElement("label");
+      label.htmlFor = id;
+      label.textContent = `Seat ${code} · ${categoryLabel(seatInfo(code).category)}`;
+      const input = document.createElement("input");
+      Object.assign(input, { id, type: "text", maxLength: 80, autocomplete: "off", spellcheck: false });
+      input.dataset.seat = code;
+      input.placeholder = i === 0 ? "Same as Full Name if empty" : "Attendee full name";
+      input.value = prev[code] || "";
+      els.attendees.append(label, input);
     });
-    return state.pdfDoc;
   }
 
-  function setCreating(on) {
-    if (!els.createBtn) return;
-    els.createBtn.disabled = on;
-    els.createBtn.textContent = on ? "Creating ticket..." : "Create ticket";
-    if (els.formStatus) {
-      els.formStatus.textContent = on ? "Building the ticket PDF and saving the seat." : "";
-    }
+  function ticketCard(t) {
+    const wrap = document.createElement("article");
+    wrap.className = "ticket-item";
+    const card = document.createElement("div");
+    card.className = "ticket-blank-wrap";
+    card.innerHTML = `<img class="ticket-blank-img" src="assets/ticket-blank-v2.jpg" alt="International Conference of Orthodontic Society 2027 ticket">
+      <p class="ticket-field tf-name"></p><p class="ticket-field tf-seat"></p><p class="ticket-field tf-cat"></p>
+      <p class="ticket-field tf-event">International Conference of Orthodontic Society 2027</p><p class="ticket-field tf-id"></p>`;
+    card.querySelector(".tf-name").textContent = t.name;
+    card.querySelector(".tf-seat").textContent = t.seat;
+    card.querySelector(".tf-cat").textContent = t.category;
+    card.querySelector(".tf-id").textContent = t.ticketId;
+    const actions = document.createElement("div");
+    actions.className = "actions";
+    const dl = document.createElement("button");
+    dl.type = "button"; dl.className = "btn btn-gold"; dl.textContent = `Download ticket ${t.seat}`;
+    const sh = document.createElement("button");
+    sh.type = "button"; sh.className = "btn btn-ghost"; sh.textContent = "Share ticket PDF";
+    const status = document.createElement("p");
+    status.className = "status";
+    let doc = null;
+    const pdf = async () => doc || (doc = await window.CCTicket.buildTicketPdf({ name: t.name, seat: t.seat, category: t.category, id: t.ticketId }));
+    dl.addEventListener("click", async () => {
+      try { (await pdf()).save(window.CCTicket.fileName(t.seat, t.ticketId)); } catch (e) { status.textContent = `Download failed. ${e.message || e}`; }
+    });
+    sh.addEventListener("click", async () => {
+      try { await window.CCTicket.shareTicketPdf(await pdf(), { name: t.name, seat: t.seat, id: t.ticketId }); } catch (e) { status.textContent = `Share failed. ${e.message || e}`; }
+    });
+    actions.append(dl, sh);
+    wrap.append(card, actions, status);
+    return wrap;
   }
 
-  async function createTicket(name) {
-    state.ticket = {
-      name,
-      seat: state.selected,
-      id: makeTicketId(),
-    };
-    state.saveNote = "";
-    els.tName.textContent = state.ticket.name;
-    els.tSeat.textContent = state.ticket.seat.code;
-    els.tCat.textContent = categoryLabel(state.ticket.seat.category);
-    els.tId.textContent = state.ticket.id;
-
-    try {
-      const save = await window.CCStore.addRegistration({
-        name,
-        seat: state.ticket.seat.code,
-        category: categoryLabel(state.ticket.seat.category),
-        ticketId: state.ticket.id,
-        createdAt: new Date().toISOString(),
-      });
-      if (save && save.sections) applySections(save.sections);
-      if (save && save.source === "local") {
-        state.saveNote = "Ticket is ready. It is saved on this device. The shared list could not be updated.";
-      } else if (save && save.source === "shared") {
-        state.saveNote = "Ticket is ready and saved to the shared list.";
-      }
-    } catch (err) {
-      const message = String(err.message || err);
-      if (/just taken|already registered|not open for booking/i.test(message)) {
-        els.formError.textContent = `${message} Pick another seat.`;
-        if (window.CCStore) {
-          try {
-            const result = await window.CCStore.listRegistrations();
-            if (result.sections) applySections(result.sections);
-            replaceTaken(result.items.map((item) => item.seat));
-          } catch {
-            addTaken([state.ticket.seat.code]);
-          }
-        }
-        state.ticket = null;
-        state.pdfDoc = null;
-        showStep(1);
-        return;
-      }
-      const why = window.CCStore.friendlyError
-        ? window.CCStore.friendlyError(message)
-        : message;
-      state.saveNote = `Ticket preview is ready. Registration may not have reached the shared list (${why}).`;
-    }
-
-    addTaken([state.ticket.seat.code]);
-    if (window.CCStore) {
-      window.CCStore.listRegistrations().then((result) => {
-        if (result.sections) applySections(result.sections);
-        replaceTaken(result.items.map((item) => item.seat));
-      }).catch(() => {});
-    }
-
-    try {
-      await buildPdf();
-    } catch (err) {
-      state.pdfDoc = null;
-      if (els.ticketStatus) {
-        els.ticketStatus.textContent = `${state.saveNote ? `${state.saveNote} ` : ""}The PDF could not be built (${String(err.message || err)}). Try Download ticket again.`;
-      }
-      showStep(3);
-      return;
-    }
-
-    if (els.ticketStatus) els.ticketStatus.textContent = state.saveNote;
-    showStep(3);
-  }
-
-  async function ensurePdf() {
-    if (state.pdfDoc) return state.pdfDoc;
-    if (!state.ticket) return null;
-    return buildPdf();
-  }
-
-  async function downloadPdf() {
-    try {
-      const doc = await ensurePdf();
-      if (!doc || !state.ticket) {
-        if (els.ticketStatus) els.ticketStatus.textContent = "The PDF is not ready yet. Go back and create the ticket again.";
-        return;
-      }
-      doc.save(window.CCTicket.fileName(state.ticket.seat.code, state.ticket.id));
-    } catch (err) {
-      if (els.ticketStatus) els.ticketStatus.textContent = `Download failed. ${String(err.message || err)}`;
-    }
-  }
-
-  async function sharePdf() {
-    try {
-      const doc = await ensurePdf();
-      if (!doc || !state.ticket) {
-        if (els.ticketStatus) els.ticketStatus.textContent = "The PDF is not ready yet. Go back and create the ticket again.";
-        return;
-      }
-      await window.CCTicket.shareTicketPdf(doc, {
-        name: state.ticket.name,
-        seat: state.ticket.seat.code,
-        id: state.ticket.id,
-      });
-    } catch (err) {
-      if (els.ticketStatus) els.ticketStatus.textContent = `Share failed. ${String(err.message || err)}`;
-    }
+  function renderTickets(container, tickets) {
+    container.innerHTML = "";
+    tickets.forEach((t) => container.appendChild(ticketCard(t)));
   }
 
   async function refreshTaken(initial) {
-    if (!window.CCStore) {
-      if (els.hallStatus) els.hallStatus.textContent = "Seat list is stored on this device only.";
-      paintSeats();
-      return;
-    }
-    if (initial && els.hallStatus) {
-      els.hallStatus.textContent = "Checking which seats are already taken.";
-    }
+    if (initial && els.hallStatus) els.hallStatus.textContent = "Checking which seats are already taken.";
     try {
       const result = await window.CCStore.listRegistrations();
-      if (result.sections) applySections(result.sections);
-      replaceTaken(result.items.map((item) => item.seat));
-      if (!els.hallStatus) return;
-      if (result.error) {
-        const why = window.CCStore.friendlyError
-          ? window.CCStore.friendlyError(result.error)
-          : result.error;
-        els.hallStatus.textContent = `Taken seats on this device are marked red. Shared list unavailable: ${why}.`;
-      } else if (result.source === "local") {
-        els.hallStatus.textContent = "Showing booked seats saved on this device.";
-      } else {
-        els.hallStatus.textContent = "Taken seats are marked red. Closed sections cannot be booked.";
-      }
+      if (result.sections) state.sections = { ...DEFAULT_SECTIONS, ...result.sections };
+      state.taken = new Set(result.items.map((i) => i.seat));
+      paintSeats();
+      els.hallStatus.textContent = result.error
+        ? `Could not load taken seats: ${window.CCStore.friendlyError(result.error)}.`
+        : "Taken seats are marked red. Closed sections cannot be booked.";
     } catch (err) {
       paintSeats();
-      if (els.hallStatus) {
-        const why = window.CCStore.friendlyError
-          ? window.CCStore.friendlyError(err.message || err)
-          : String(err.message || err);
-        els.hallStatus.textContent = `Could not refresh taken seats (${why}). Booked seats already on this device stay red.`;
-      }
+      els.hallStatus.textContent = `Could not refresh taken seats (${window.CCStore.friendlyError(err.message || err)}).`;
     }
   }
 
-  els.blocks.addEventListener("click", (event) => {
-    const seat = event.target.closest(".seat");
-    if (!seat) return;
-    selectSeat(seat.dataset.code);
+  // Events
+  $("qty-minus").addEventListener("click", () => setQty(state.qty - 1));
+  $("qty-plus").addEventListener("click", () => setQty(state.qty + 1));
+  $("qty-next").addEventListener("click", () => { showStep(2); refreshTaken(false); });
+  $("back-to-qty").addEventListener("click", () => showStep(1));
+  els.blocks.addEventListener("click", (e) => {
+    const seat = e.target.closest(".seat");
+    if (seat) toggleSeat(seat.dataset.code);
   });
-
   els.nextBtn.addEventListener("click", () => {
-    if (!state.selected) return;
+    if (state.selected.length !== state.qty) return;
     els.formError.textContent = "";
-    if (els.formStatus) els.formStatus.textContent = "";
-    showStep(2);
-    els.doctorName.focus();
+    els.formStatus.textContent = "";
+    renderAttendeeFields();
+    showStep(3);
+    els.buyerName.focus();
   });
+  $("back-to-seats").addEventListener("click", () => showStep(2));
 
-  els.backToSeats.addEventListener("click", () => showStep(1));
-
-  els.form.addEventListener("submit", async (event) => {
-    event.preventDefault();
-    const name = els.doctorName.value.trim();
-    if (name.length < 2) {
-      els.formError.textContent = "Full name is required.";
-      els.doctorName.focus();
-      return;
-    }
+  els.form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const buyerName = els.buyerName.value.replace(/\s+/g, " ").trim();
+    const email = els.buyerEmail.value.trim().toLowerCase();
+    if (buyerName.length < 2) { els.formError.textContent = "Full name is required."; els.buyerName.focus(); return; }
+    if (!EMAIL_RE.test(email)) { els.formError.textContent = "Please enter a valid email address."; els.buyerEmail.focus(); return; }
+    const tickets = state.selected.map((seat) => {
+      const input = els.attendees.querySelector(`input[data-seat="${seat}"]`);
+      return { seat, name: (input && input.value.replace(/\s+/g, " ").trim()) || buyerName };
+    });
+    const bad = tickets.find((t) => t.name.length < 2);
+    if (bad) { els.formError.textContent = `Enter a name for seat ${bad.seat}.`; return; }
     els.formError.textContent = "";
-    setCreating(true);
+    els.createBtn.disabled = true;
+    els.createBtn.textContent = "Booking...";
+    els.formStatus.textContent = `Saving ${tickets.length} seat${tickets.length === 1 ? "" : "s"}.`;
     try {
-      await createTicket(name);
+      const res = await window.CCStore.bookSeats({ buyerName, email, tickets });
+      res.tickets.forEach((t) => state.taken.add(t.seat));
+      state.selected = [];
+      paintSeats();
+      renderTickets(els.ticketList, res.tickets);
+      els.ticketStatus.textContent = `Booked ${res.tickets.length} ticket${res.tickets.length === 1 ? "" : "s"} for ${res.email}. Use Check Ticket with this email to find them again.`;
+      showStep(4);
+    } catch (err) {
+      const msg = String(err.message || err);
+      els.formError.textContent = msg;
+      if (err.status === 409) {
+        await refreshTaken(false);
+        els.hallStatus.textContent = `${msg}`;
+        showStep(2);
+      }
     } finally {
-      setCreating(false);
+      els.createBtn.disabled = false;
+      els.createBtn.textContent = "Book tickets";
+      els.formStatus.textContent = "";
     }
   });
 
-  els.downloadBtn.addEventListener("click", downloadPdf);
-  els.shareBtn.addEventListener("click", sharePdf);
-  els.newBooking.addEventListener("click", () => {
-    state.ticket = null;
-    state.pdfDoc = null;
-    state.saveNote = "";
-    els.doctorName.value = "";
-    if (els.ticketStatus) els.ticketStatus.textContent = "";
+  $("new-booking").addEventListener("click", () => {
+    els.ticketList.innerHTML = "";
+    els.ticketStatus.textContent = "";
+    setQty(1);
     showStep(1);
   });
 
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "visible") refreshTaken(false);
+  $("check-ticket-btn").addEventListener("click", () => {
+    els.lookupError.textContent = "";
+    showStep("lookup");
+    els.lookupEmail.focus();
   });
+  $("lookup-back").addEventListener("click", () => showStep(1));
+  els.lookupForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const email = els.lookupEmail.value.trim().toLowerCase();
+    els.lookupList.innerHTML = "";
+    if (!EMAIL_RE.test(email)) { els.lookupError.textContent = "Please enter a valid email address."; return; }
+    els.lookupError.textContent = "";
+    els.lookupBtn.disabled = true;
+    try {
+      const tickets = await window.CCStore.lookupTickets(email);
+      if (!tickets.length) els.lookupError.textContent = "No tickets found for this email.";
+      else renderTickets(els.lookupList, tickets);
+    } catch (err) {
+      els.lookupError.textContent = String(err.message || err);
+    } finally {
+      els.lookupBtn.disabled = false;
+    }
+  });
+
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible") refreshTaken(false); });
   window.setInterval(() => refreshTaken(false), 20000);
 
-  loadTakenCache();
-  loadSectionsCache();
   hall.renderHall(els.blocks);
+  setQty(1);
   paintSeats();
   refreshTaken(true);
+  if (location.hash === "#check") $("check-ticket-btn").click();
 })();

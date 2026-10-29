@@ -1,5 +1,4 @@
 (() => {
-  const PASS = (window.CC_CONFIG && window.CC_CONFIG.adminPassword) || "cc2026";
   const AUTH_KEY = "cc-admin-ok";
   const hall = window.CCHall;
   const DEFAULT_SECTIONS = (window.CCStore && window.CCStore.DEFAULT_SECTIONS)
@@ -76,7 +75,7 @@
     const q = (els.filter.value || "").trim().toLowerCase();
     return cache.filter((row) => {
       if (!q) return true;
-      return [row.name, row.seat, row.ticketId, row.category].join(" ").toLowerCase().includes(q);
+      return [row.name, row.email, row.seat, row.ticketId, row.category].join(" ").toLowerCase().includes(q);
     });
   }
 
@@ -106,7 +105,7 @@
     }
     els.rows.innerHTML = rows.map((row) => `
       <tr>
-        <td data-label="Full Name">${escapeHtml(row.name)}</td>
+        <td data-label="Full Name">${escapeHtml(row.name)}${row.email ? `<br><small>${escapeHtml(row.email)}</small>` : ""}</td>
         <td data-label="Seat"><strong>${escapeHtml(row.seat)}</strong></td>
         <td data-label="Category">${escapeHtml(row.category || "Not set")}</td>
         <td data-label="Time">${escapeHtml(formatWhen(row.createdAt))}</td>
@@ -226,9 +225,10 @@
       setStatus("There are no registrations to download.");
       return;
     }
-    const header = ["Full Name", "Seat", "Category", "Time", "Ticket ID"];
+    const header = ["Full Name", "Email", "Seat", "Category", "Time", "Ticket ID"];
     const lines = [header.join(",")].concat(cache.map((row) => [
       csv(row.name),
+      csv(row.email),
       csv(row.seat),
       csv(row.category),
       csv(row.createdAt),
@@ -313,12 +313,15 @@
     }
   }
 
-  els.form.addEventListener("submit", (event) => {
+  els.form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (els.pass.value !== PASS) {
-      els.error.textContent = "Incorrect password.";
+    try {
+      await window.CCStore.login(els.pass.value);
+    } catch (err) {
+      els.error.textContent = err.status === 401 ? "Incorrect password." : String(err.message || err);
       return;
     }
+    els.pass.value = "";
     sessionStorage.setItem(AUTH_KEY, "1");
     els.error.textContent = "";
     showDash(true);
@@ -352,14 +355,21 @@
   els.exportBtn.addEventListener("click", exportCsv);
   els.logout.addEventListener("click", () => {
     sessionStorage.removeItem(AUTH_KEY);
+    window.CCStore.logout();
     showDash(false);
     els.pass.value = "";
     els.pass.focus();
   });
 
-  if (unlocked()) {
+  window.CCStore.session().then((ok) => {
+    if (!ok) {
+      sessionStorage.removeItem(AUTH_KEY);
+      showDash(false);
+      return;
+    }
+    sessionStorage.setItem(AUTH_KEY, "1");
     showDash(true);
     hall.renderHall(els.blocks, { selectable: false });
     load();
-  }
+  });
 })();
