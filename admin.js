@@ -1,5 +1,4 @@
 (() => {
-  const PASS = (window.CC_CONFIG && window.CC_CONFIG.adminPassword) || "cc2026";
   const AUTH_KEY = "cc-admin-ok";
   const hall = window.CCHall;
   const DEFAULT_SECTIONS = (window.CCStore && window.CCStore.DEFAULT_SECTIONS)
@@ -313,12 +312,15 @@
     }
   }
 
-  els.form.addEventListener("submit", (event) => {
+  els.form.addEventListener("submit", async (event) => {
     event.preventDefault();
-    if (els.pass.value !== PASS) {
-      els.error.textContent = "Incorrect password.";
+    try {
+      await window.CCStore.login(els.pass.value);
+    } catch (err) {
+      els.error.textContent = err.status === 401 ? "Incorrect password." : String(err.message || err);
       return;
     }
+    els.pass.value = "";
     sessionStorage.setItem(AUTH_KEY, "1");
     els.error.textContent = "";
     showDash(true);
@@ -352,14 +354,21 @@
   els.exportBtn.addEventListener("click", exportCsv);
   els.logout.addEventListener("click", () => {
     sessionStorage.removeItem(AUTH_KEY);
+    window.CCStore.logout();
     showDash(false);
     els.pass.value = "";
     els.pass.focus();
   });
 
-  if (unlocked()) {
+  window.CCStore.session().then((ok) => {
+    if (!ok) {
+      sessionStorage.removeItem(AUTH_KEY);
+      showDash(false);
+      return;
+    }
+    sessionStorage.setItem(AUTH_KEY, "1");
     showDash(true);
     hall.renderHall(els.blocks, { selectable: false });
     load();
-  }
+  });
 })();

@@ -35,3 +35,18 @@ Layout checks:
 ```bash
 node scripts/verify-layout.js
 ```
+
+## Cloudflare deployment (ICOS 2027)
+
+Live: https://icos2027.pages.dev (Cloudflare Pages project `icos2027`).
+
+- Static site + Pages Functions in `functions/api/*` (seats, bookings, login, logout, session, sections).
+- Bookings live in Cloudflare D1 (`DB` binding), tables `icos2027_bookings` / `icos2027_settings`,
+  created automatically. `UNIQUE(event, seat)` makes double booking impossible.
+- Admin login is server-side: `ADMIN_PASSWORD_HASH` (sha256 hex) and `SESSION_SECRET` are Cloudflare
+  secrets; login sets a signed, HttpOnly, Secure, SameSite=Strict cookie (8 h). No password in client code.
+- Deploy: `./build.sh && npx wrangler pages deploy public --project-name=icos2027 --branch=main`
+- Local: put `ADMIN_PASSWORD_HASH` and `SESSION_SECRET` in `.dev.vars`, then
+  `./build.sh && npx wrangler pages dev ./public --d1 DB=local`.
+
+The GitHub Pages copy has no backend, so booking only works on the Cloudflare site.
